@@ -6,7 +6,7 @@ import {
   Marker,
   useLoadScript,
   Libraries, // Import Libraries type
-} from "@react-google-maps/api";
+} from "@react-goolge-maps/api";
 import {
   Car,
   Construction,
@@ -22,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 // --- Google Maps API Key ---
 // It's best practice to store this in an environment variable.
@@ -161,8 +161,7 @@ export function MapView({
               position={{ lat: incident.location.lat, lng: incident.location.lng }}
               onClick={() => onMarkerClick(incident)}
               title={incident.title}
-              // THIS IS THE CORRECTED LINE:
-              icon={markerIcon} // <--- Change 'icon: markerIcon,' to 'icon={markerIcon}'
+              icon={markerIcon}
             >
               {/* You can add an InfoWindow here if you want it to open on click */}
               {/* <InfoWindow onCloseClick={() => setSelectedIncident(null)}>
