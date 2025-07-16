@@ -115,6 +115,7 @@ export default function Home() {
           open={!!selectedIncident}
           onOpenChange={(open) => !open && setSelectedIncident(null)}
         />
+        
         <ReportIncidentDialog
           open={isReportDialogOpen}
           onOpenChange={setReportDialogOpen}
