@@ -7,11 +7,11 @@ import { Plus, Search } from "lucide-react";
 
 import { mockIncidents } from "@/lib/mock-data";
 import type { Incident } from "@/lib/types";
-import { BottomNav } from "@/components/bottom-nav";
 import { MapView } from "@/components/map-view";
 import { IncidentSheet } from "@/components/incident-sheet";
 import { ReportIncidentDialog } from "@/components/report-incident-dialog";
 import { FilterPopover, type Filters } from "@/components/filter-popover";
+import { PhoneLayout } from "@/components/phone-layout";
 import { UrbanPulseLogo } from "@/components/icons";
 
 export default function Home() {
@@ -62,8 +62,7 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-[420px] h-[850px] bg-background rounded-[40px] shadow-2xl border-8 border-neutral-900 overflow-hidden relative flex flex-col">
+    <PhoneLayout>
         <header className="absolute top-0 left-0 right-0 z-20 p-4 bg-gradient-to-b from-background/90 via-background/70 to-transparent">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -108,8 +107,6 @@ export default function Home() {
           <Plus className="h-7 w-7" />
         </Button>
 
-        <BottomNav />
-
         <IncidentSheet
           incident={selectedIncident}
           open={!!selectedIncident}
@@ -120,7 +117,6 @@ export default function Home() {
           open={isReportDialogOpen}
           onOpenChange={setReportDialogOpen}
         />
-      </div>
-    </div>
+    </PhoneLayout>
   );
 }

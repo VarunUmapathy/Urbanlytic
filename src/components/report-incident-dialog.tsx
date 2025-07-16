@@ -91,7 +91,7 @@ export function ReportIncidentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] w-[calc(100%-2rem)] sm:w-full bottom-0 sm:bottom-auto translate-y-0 sm:-translate-y-1/2 rounded-b-none sm:rounded-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Report an Incident</DialogTitle>
