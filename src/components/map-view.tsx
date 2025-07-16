@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Car, Construction, ShieldAlert, MapPin } from "lucide-react";
+import { Car, Construction, ShieldAlert, MapPin, Loader2 } from "lucide-react";
 import type { Incident, IncidentType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -10,6 +10,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useState, useEffect } from "react";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { toast } from "@/hooks/use-toast";
 
 const incidentTypeConfig: Record<
   IncidentType,
@@ -76,25 +79,84 @@ export function MapView({
   incidents: Incident[];
   onMarkerClick: (incident: Incident) => void;
 }) {
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(
+    null
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
+          setLoading(false);
+        },
+        (err) => {
+          setError(err.message);
+          setLoading(false);
+          toast({
+            variant: "destructive",
+            title: "Location Access Denied",
+            description:
+              "Please enable location services to see a map of your area. Displaying a default map.",
+          });
+        }
+      );
+    } else {
+      setError("Geolocation is not supported by this browser.");
+      setLoading(false);
+    }
+  }, []);
+
+  const getMapUrl = () => {
+    if (location) {
+      // Create a bounding box for the map image
+      const bbox = [
+        location.lon - 0.1,
+        location.lat - 0.1,
+        location.lon + 0.1,
+        location.lat + 0.1,
+      ].join(",");
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`;
+    }
+    // Fallback to a default location (San Francisco) if location is not available
+    return `https://www.openstreetmap.org/export/embed.html?bbox=-122.5,37.7,-122.3,37.8&layer=mapnik`;
+  };
+
   return (
     <div className="relative w-full h-full bg-gray-200 overflow-hidden">
-      <Image
-        src="https://placehold.co/800x1200.png"
-        alt="City map"
-        fill
-        className="object-cover opacity-70"
-        data-ai-hint="city map"
-        priority
-      />
-      <div className="w-full h-full">
-        {incidents.map((incident) => (
-          <IncidentMarker
-            key={incident.id}
-            incident={incident}
-            onClick={() => onMarkerClick(incident)}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
+          <Loader2 className="w-8 h-8 animate-spin" />
+          <p>Fetching your location...</p>
+        </div>
+      ) : (
+        <iframe
+          width="100%"
+          height="100%"
+          className="grayscale opacity-50"
+          src={getMapUrl()}
+          style={{ border: 0 }}
+          title="City map"
+          data-ai-hint="city map"
+        ></iframe>
+      )}
+
+      {!loading && (
+        <div className="absolute inset-0 w-full h-full">
+          {incidents.map((incident) => (
+            <IncidentMarker
+              key={incident.id}
+              incident={incident}
+              onClick={() => onMarkerClick(incident)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
