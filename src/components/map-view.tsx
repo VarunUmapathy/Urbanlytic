@@ -3,24 +3,22 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   GoogleMap,
-  Marker,
   useLoadScript,
   Libraries,
+  Marker,
 } from "@react-google-maps/api";
 import {
   Car,
   Construction,
   ShieldAlert,
-  MapPin,
   Loader2,
 } from "lucide-react";
 import type { Incident, IncidentType } from "@/lib/types";
-import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 const Maps_API_KEY = process.env.NEXT_PUBLIC_Maps_API_KEY || "";
 
-const libraries: Libraries = ["places"];
+const libraries: Libraries = ["places", "marker"];
 
 const incidentTypeConfig: Record<
   IncidentType,
@@ -33,6 +31,17 @@ const incidentTypeConfig: Record<
     color: "#3b82f6", // primary
     label: "Infrastructure",
   },
+};
+
+const createMarkerIcon = (color: string, status: 'active' | 'resolved') => {
+  return {
+    path: 'M-10,0a10,10 0 1,0 20,0a10,10 0 1,0 -20,0',
+    fillColor: color,
+    fillOpacity: status === 'resolved' ? 0.6 : 1.0,
+    strokeColor: 'white',
+    strokeWeight: 2,
+    scale: 1.2,
+  };
 };
 
 export function MapView({
@@ -87,6 +96,7 @@ export function MapView({
       streetViewControl: false,
       mapTypeControl: false,
       fullscreenControl: false,
+      mapId: "URBANLYTIC_MAP_ID",
     }),
     []
   );
@@ -119,23 +129,14 @@ export function MapView({
       >
         {incidents.map((incident) => {
           const config = incidentTypeConfig[incident.type];
-          const markerIcon = {
-            path: window.google.maps.SymbolPath.CIRCLE,
-            fillColor: config.color,
-            fillOpacity: incident.status === 'resolved' ? 0.5 : 1.0,
-            strokeColor: "#ffffff",
-            strokeWeight: 2,
-            scale: 8,
-          };
-
           return (
-            <Marker
-              key={incident.id}
-              position={incident.location}
-              onClick={() => onMarkerClick(incident)}
-              title={incident.title}
-              icon={markerIcon}
-            />
+             <Marker
+                key={incident.id}
+                position={incident.location}
+                title={incident.title}
+                onClick={() => onMarkerClick(incident)}
+                icon={createMarkerIcon(config.color, incident.status)}
+              />
           );
         })}
       </GoogleMap>
