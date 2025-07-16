@@ -34,7 +34,7 @@ export function BottomNav() {
             <Link href={item.href}>
               <div className="relative">
                 <item.icon className="w-6 h-6" />
-                {item.notificationCount && item.notificationCount > 0 && (
+                {item.notificationCount > 0 && (
                   <Badge
                     variant="destructive"
                     className="absolute -top-1 -right-2 h-4 w-4 justify-center p-0 text-[10px]"
