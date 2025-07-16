@@ -5,7 +5,7 @@ import {
   GoogleMap,
   Marker,
   useLoadScript,
-  Libraries, // Import Libraries type
+  Libraries,
 } from "@react-google-maps/api";
 import {
   Car,
@@ -16,37 +16,24 @@ import {
 } from "lucide-react";
 import type { Incident, IncidentType } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 
-// --- Google Maps API Key ---
-// It's best practice to store this in an environment variable.
-// Create a .env.local file in your project root:
-// NEXT_PUBLIC_Maps_API_KEY="YOUR_Maps_API_KEY"
 const Maps_API_KEY = process.env.NEXT_PUBLIC_Maps_API_KEY || "";
 
-const libraries: Libraries = ["places"]; // You might need 'geometry' or 'drawing' later. 'places' is often useful.
+const libraries: Libraries = ["places"];
 
 const incidentTypeConfig: Record<
   IncidentType,
   { icon: React.ElementType; color: string; label: string }
 > = {
-  traffic: { icon: Car, color: "bg-destructive", label: "Traffic" },
-  safety: { icon: ShieldAlert, color: "bg-accent", label: "Safety" },
+  traffic: { icon: Car, color: "#ef4444", label: "Traffic" }, // destructive
+  safety: { icon: ShieldAlert, color: "#f59e0b", label: "Safety" }, // accent (approximated)
   infrastructure: {
     icon: Construction,
-    color: "bg-primary",
+    color: "#3b82f6", // primary
     label: "Infrastructure",
   },
 };
-
-// Removed the custom IncidentMarker component as Google Maps has its own Marker component.
-// The icon customization will be done directly within the Google Maps Marker.
 
 export function MapView({
   incidents,
@@ -61,12 +48,9 @@ export function MapView({
   });
 
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(12); // Initial zoom level
   const { toast } = useToast();
 
   useEffect(() => {
-    // Attempt to get user's current location
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -74,37 +58,31 @@ export function MapView({
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           });
-          setZoom(14); // Zoom in more if we have a precise location
         },
-        (err) => {
-          setError(err.message);
+        () => {
           toast({
             variant: "destructive",
             title: "Location Access Denied",
             description:
-              "Please enable location services to see a map of your area. Displaying a default location (Chennai, India).",
+              "Could not access your location. Displaying a default location.",
           });
-          // Fallback to Chennai if location access is denied or not supported
-          setMapCenter({ lat: 13.0827, lng: 80.2707 }); // Chennai coordinates
+          setMapCenter({ lat: 13.0827, lng: 80.2707 }); // Fallback to Chennai
         }
       );
     } else {
-      setError("Geolocation is not supported by this browser.");
       toast({
         variant: "destructive",
         title: "Geolocation Not Supported",
         description:
-          "Your browser does not support geolocation. Displaying a default map (Chennai, India).",
+          "Your browser does not support geolocation. Displaying a default location.",
       });
-      // Fallback to Chennai if geolocation is not supported
-      setMapCenter({ lat: 13.0827, lng: 80.2707 }); // Chennai coordinates
+      setMapCenter({ lat: 13.0827, lng: 80.2707 }); // Fallback to Chennai
     }
   }, [toast]);
 
-  // Memoize the map options to prevent unnecessary re-renders
   const mapOptions = useMemo(
     () => ({
-      disableDefaultUI: false, // You can set this to true to remove default UI
+      disableDefaultUI: true,
       zoomControl: true,
       streetViewControl: false,
       mapTypeControl: false,
@@ -116,7 +94,7 @@ export function MapView({
   if (loadError) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 text-destructive">
-        <p>Error loading Google Maps: {loadError.message}</p>
+        <p>Error loading Google Maps.</p>
         <p>Please check your API key and network connection.</p>
       </div>
     );
@@ -136,35 +114,29 @@ export function MapView({
       <GoogleMap
         mapContainerStyle={{ width: "100%", height: "100%" }}
         center={mapCenter}
-        zoom={zoom}
+        zoom={12}
         options={mapOptions}
-        // You can add an onLoad callback if needed, but not strictly necessary for basic display
-        // onLoad={(map) => console.log('Map loaded', map)}
       >
         {incidents.map((incident) => {
           const config = incidentTypeConfig[incident.type];
-          // Create a custom SVG for the marker icon
           const markerIcon = {
-            path: MapPin.toString(), // Use the SVG path from Lucide icon
-            fillColor: config.color.replace('bg-', '#'), // Convert Tailwind bg-color to hex or similar
-            fillOpacity: incident.status === "resolved" ? 0.3 : 1,
-            strokeWeight: 0,
-            scale: 1.2, // Adjust size
-            anchor: new google.maps.Point(12, 24), // Center the icon
-            // For custom icons, you might use:
-            // url: '/path/to/your/custom-marker.png',
-            // scaledSize: new google.maps.Size(32, 32),
+            path: window.google.maps.SymbolPath.CIRCLE,
+            fillColor: config.color,
+            fillOpacity: incident.status === 'resolved' ? 0.5 : 1.0,
+            strokeColor: "#ffffff",
+            strokeWeight: 2,
+            scale: 8,
           };
 
           return (
-              <Marker
+            <Marker
               key={incident.id}
-              position={{ lat: incident.location.lat, lng: incident.location.lng }}
+              position={incident.location}
               onClick={() => onMarkerClick(incident)}
               title={incident.title}
               icon={markerIcon}
             />
-          )
+          );
         })}
       </GoogleMap>
     </div>
