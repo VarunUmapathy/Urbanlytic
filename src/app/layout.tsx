@@ -3,7 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "Urban Pulse",
+  title: "Urbanlytic",
   description: "Real-time urban insights and citizen reporting.",
 };
 

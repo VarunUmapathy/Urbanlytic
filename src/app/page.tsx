@@ -69,7 +69,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <UrbanPulseLogo className="w-8 h-8 text-primary" />
               <h1 className="text-xl font-bold font-headline text-foreground">
-                Urban Pulse
+                Urbanlytic
               </h1>
             </div>
           </div>
