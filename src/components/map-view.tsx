@@ -1,7 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { Car, Construction, ShieldAlert, MapPin, Loader2 } from "lucide-react";
+import {
+  Car,
+  Construction,
+  ShieldAlert,
+  MapPin,
+  Loader2,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 import type { Incident, IncidentType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -11,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Button } from "./ui/button";
 import { toast } from "@/hooks/use-toast";
 
 const incidentTypeConfig: Record<
@@ -84,6 +92,7 @@ export function MapView({
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [zoom, setZoom] = useState(0.1);
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -113,18 +122,29 @@ export function MapView({
   }, []);
 
   const getMapUrl = () => {
+    const fallbackBbox = [-122.5, 37.7, -122.3, 37.8];
+    let bbox;
+
     if (location) {
-      // Create a bounding box for the map image
-      const bbox = [
-        location.lon - 0.1,
-        location.lat - 0.1,
-        location.lon + 0.1,
-        location.lat + 0.1,
-      ].join(",");
-      return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`;
+      bbox = [
+        location.lon - zoom,
+        location.lat - zoom,
+        location.lon + zoom,
+        location.lat + zoom,
+      ];
+    } else {
+      const zoomAdjustedFallback = [
+        fallbackBbox[0] + zoom - 0.1,
+        fallbackBbox[1] + zoom - 0.1,
+        fallbackBbox[2] - zoom + 0.1,
+        fallbackBbox[3] - zoom + 0.1,
+      ];
+      bbox = zoomAdjustedFallback;
     }
-    // Fallback to a default location (San Francisco) if location is not available
-    return `https://www.openstreetmap.org/export/embed.html?bbox=-122.5,37.7,-122.3,37.8&layer=mapnik`;
+
+    return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox.join(
+      ","
+    )}&layer=mapnik`;
   };
 
   return (
@@ -147,15 +167,36 @@ export function MapView({
       )}
 
       {!loading && (
-        <div className="absolute inset-0 w-full h-full">
-          {incidents.map((incident) => (
-            <IncidentMarker
-              key={incident.id}
-              incident={incident}
-              onClick={() => onMarkerClick(incident)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+            <Button
+              size="icon"
+              onClick={() => setZoom((z) => Math.max(z / 2, 0.001))}
+              className="rounded-full shadow-lg"
+              aria-label="Zoom in"
+            >
+              <ZoomIn />
+            </Button>
+            <Button
+              size="icon"
+              onClick={() => setZoom((z) => Math.min(z * 2, 0.5))}
+              className="rounded-full shadow-lg"
+              aria-label="Zoom out"
+            >
+              <ZoomOut />
+            </Button>
+          </div>
+
+          <div className="absolute inset-0 w-full h-full">
+            {incidents.map((incident) => (
+              <IncidentMarker
+                key={incident.id}
+                incident={incident}
+                onClick={() => onMarkerClick(incident)}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
