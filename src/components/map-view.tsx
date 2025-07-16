@@ -7,8 +7,6 @@ import {
   ShieldAlert,
   MapPin,
   Loader2,
-  ZoomIn,
-  ZoomOut,
 } from "lucide-react";
 import type { Incident, IncidentType } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -92,7 +90,9 @@ export function MapView({
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [zoom, setZoom] = useState(0.1);
+  
+  // This state is no longer needed to control zoom via component state.
+  // const [zoom, setZoom] = useState(0.1); 
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -122,29 +122,12 @@ export function MapView({
   }, []);
 
   const getMapUrl = () => {
-    const fallbackBbox = [-122.5, 37.7, -122.3, 37.8];
-    let bbox;
+    // Default to San Francisco if location is not available
+    const lat = location?.lat ?? 37.7749;
+    const lon = location?.lon ?? -122.4194;
+    const zoomLevel = 13;
 
-    if (location) {
-      bbox = [
-        location.lon - zoom,
-        location.lat - zoom,
-        location.lon + zoom,
-        location.lat + zoom,
-      ];
-    } else {
-      const zoomAdjustedFallback = [
-        fallbackBbox[0] + zoom - 0.1,
-        fallbackBbox[1] + zoom - 0.1,
-        fallbackBbox[2] - zoom + 0.1,
-        fallbackBbox[3] - zoom + 0.1,
-      ];
-      bbox = zoomAdjustedFallback;
-    }
-
-    return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox.join(
-      ","
-    )}&layer=mapnik`;
+    return `https://www.openstreetmap.org/export/embed.html?bbox=${lon - 0.05},${lat - 0.05},${lon + 0.05},${lat + 0.05}&layer=mapnik&marker=${lat},${lon}`;
   };
 
   return (
@@ -158,7 +141,7 @@ export function MapView({
         <iframe
           width="100%"
           height="100%"
-          className="grayscale opacity-50"
+          className="grayscale-[50%] opacity-80"
           src={getMapUrl()}
           style={{ border: 0 }}
           title="City map"
@@ -167,36 +150,16 @@ export function MapView({
       )}
 
       {!loading && (
-        <>
-          <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
-            <Button
-              size="icon"
-              onClick={() => setZoom((z) => Math.max(z / 2, 0.001))}
-              className="rounded-full shadow-lg"
-              aria-label="Zoom in"
-            >
-              <ZoomIn />
-            </Button>
-            <Button
-              size="icon"
-              onClick={() => setZoom((z) => Math.min(z * 2, 0.5))}
-              className="rounded-full shadow-lg"
-              aria-label="Zoom out"
-            >
-              <ZoomOut />
-            </Button>
-          </div>
-
-          <div className="absolute inset-0 w-full h-full">
-            {incidents.map((incident) => (
+        <div className="absolute inset-0 w-full h-full pointer-events-none">
+          {incidents.map((incident) => (
+            <div key={incident.id} className="pointer-events-auto">
               <IncidentMarker
-                key={incident.id}
                 incident={incident}
                 onClick={() => onMarkerClick(incident)}
               />
-            ))}
-          </div>
-        </>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
