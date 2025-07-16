@@ -6,7 +6,7 @@ import {
   Marker,
   useLoadScript,
   Libraries, // Import Libraries type
-} from "@react-goolge-maps/api";
+} from "@react-google-maps/api";
 import {
   Car,
   Construction,
@@ -63,6 +63,7 @@ export function MapView({
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(12); // Initial zoom level
+  const { toast } = useToast();
 
   useEffect(() => {
     // Attempt to get user's current location
@@ -98,7 +99,7 @@ export function MapView({
       // Fallback to Chennai if geolocation is not supported
       setMapCenter({ lat: 13.0827, lng: 80.2707 }); // Chennai coordinates
     }
-  }, []);
+  }, [toast]);
 
   // Memoize the map options to prevent unnecessary re-renders
   const mapOptions = useMemo(
@@ -162,15 +163,7 @@ export function MapView({
               onClick={() => onMarkerClick(incident)}
               title={incident.title}
               icon={markerIcon}
-            >
-              {/* You can add an InfoWindow here if you want it to open on click */}
-              {/* <InfoWindow onCloseClick={() => setSelectedIncident(null)}>
-                <div>
-                  <h3>{incident.title}</h3>
-                  <p>{incident.description}</p>
-                </div>
-              </InfoWindow> */}
-            </Marker>
+            />
           )
         })}
       </GoogleMap>
