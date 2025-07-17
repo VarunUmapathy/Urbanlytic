@@ -25,7 +25,7 @@ const incidentTypeConfig: Record<
   { icon: React.ElementType; color: string; label: string }
 > = {
   traffic: { icon: Car, color: "#ef4444", label: "Traffic" }, // destructive
-  safety: { icon: ShieldAlert, color: "#f59e0b", label: "Safety" }, // accent (approximated)
+  safety: { icon: ShieldAlert, color: "#f99800", label: "Safety" }, // accent
   infrastructure: {
     icon: Construction,
     color: "#3b82f6", // primary
@@ -58,6 +58,11 @@ export function MapView({
 
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -110,7 +115,7 @@ export function MapView({
     );
   }
 
-  if (!isLoaded || !mapCenter) {
+  if (!isLoaded || !mapCenter || !isClient) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
         <Loader2 className="w-8 h-8 animate-spin" />
