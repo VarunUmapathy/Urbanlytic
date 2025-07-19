@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { PhoneLayout } from "@/components/phone-layout";
 import { UrbanPulseLogo } from "@/components/icons";
-import { mockIncidents } from "@/lib/mock-data";
+import { getIncidents } from "@/services/incidents";
 import type { Incident, IncidentType } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -16,6 +17,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const incidentTypeConfig: Record<
   IncidentType,
@@ -82,13 +84,27 @@ function AlertCard({ incident }: { incident: Incident }) {
 }
 
 export default function AlertsPage() {
-  // In a real app, this would show alerts relevant to the user's location.
-  // For now, we show all active incidents first.
-  const sortedIncidents = [...mockIncidents].sort((a, b) => {
-    if (a.status === 'active' && b.status !== 'active') return -1;
-    if (a.status !== 'active' && b.status === 'active') return 1;
-    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-  });
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchIncidents() {
+      try {
+        const fetchedIncidents = await getIncidents();
+        const sortedIncidents = [...fetchedIncidents].sort((a, b) => {
+          if (a.status === 'active' && b.status !== 'active') return -1;
+          if (a.status !== 'active' && b.status === 'active') return 1;
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        });
+        setIncidents(sortedIncidents);
+      } catch (error) {
+        console.error("Failed to fetch alerts:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchIncidents();
+  }, []);
 
   return (
     <PhoneLayout>
@@ -103,9 +119,15 @@ export default function AlertsPage() {
 
       <main className="flex-grow p-4 overflow-y-auto bg-muted/30">
         <div className="space-y-4">
-          {sortedIncidents.map((incident) => (
-            <AlertCard key={incident.id} incident={incident} />
-          ))}
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-40 w-full rounded-lg" />
+            ))
+          ) : (
+            incidents.map((incident) => (
+              <AlertCard key={incident.id} incident={incident} />
+            ))
+          )}
         </div>
       </main>
     </PhoneLayout>

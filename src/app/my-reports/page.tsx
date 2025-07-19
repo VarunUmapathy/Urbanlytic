@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { PhoneLayout } from "@/components/phone-layout";
 import { UrbanPulseLogo } from "@/components/icons";
-import { mockIncidents } from "@/lib/mock-data";
+import { getIncidents } from "@/services/incidents";
 import type { Incident, IncidentType } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,6 +18,7 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const incidentTypeConfig: Record<
   IncidentType,
@@ -79,9 +81,24 @@ function ReportItem({ incident }: { incident: Incident }) {
 }
 
 export default function MyReportsPage() {
-  // In a real app, you'd fetch reports for the logged-in user.
-  // Here, we'll just filter the mock data.
-  const myReports = mockIncidents.slice(0, 3);
+  const [myReports, setMyReports] = useState<Incident[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchMyReports() {
+      try {
+        // In a real app, you'd filter for the logged-in user.
+        // For now, we'll fetch all and slice.
+        const fetchedIncidents = await getIncidents();
+        setMyReports(fetchedIncidents.slice(0, 3));
+      } catch (error) {
+        console.error("Failed to fetch reports:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchMyReports();
+  }, []);
 
   return (
     <PhoneLayout>
@@ -96,7 +113,11 @@ export default function MyReportsPage() {
 
       <main className="flex-grow p-4 overflow-y-auto">
         <div className="space-y-4">
-          {myReports.length > 0 ? (
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-36 w-full rounded-lg" />
+            ))
+          ) : myReports.length > 0 ? (
             myReports.map((report) => (
               <ReportItem key={report.id} incident={report} />
             ))

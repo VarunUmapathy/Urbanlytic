@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 
-import { mockIncidents } from "@/lib/mock-data";
+import { getIncidents } from "@/services/incidents";
 import type { Incident } from "@/lib/types";
 import { MapView } from "@/components/map-view";
 import { IncidentSheet } from "@/components/incident-sheet";
@@ -13,14 +13,31 @@ import { ReportIncidentDialog } from "@/components/report-incident-dialog";
 import { FilterPopover, type Filters } from "@/components/filter-popover";
 import { PhoneLayout } from "@/components/phone-layout";
 import { UrbanPulseLogo } from "@/components/icons";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Home() {
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<Filters>({ type: [], status: [] });
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(
     null
   );
   const [isReportDialogOpen, setReportDialogOpen] = useState(false);
+
+  useEffect(() => {
+    async function fetchIncidents() {
+      try {
+        const fetchedIncidents = await getIncidents();
+        setIncidents(fetchedIncidents);
+      } catch (error) {
+        console.error("Failed to fetch incidents:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchIncidents();
+  }, []);
 
   const handleFilterChange = useCallback(
     (category: keyof Filters, value: string, checked: boolean) => {
@@ -40,7 +57,7 @@ export default function Home() {
   }, []);
 
   const filteredIncidents = useMemo(() => {
-    return mockIncidents.filter((incident) => {
+    return incidents.filter((incident) => {
       const searchMatch =
         searchQuery === "" ||
         incident.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -55,7 +72,7 @@ export default function Home() {
 
       return searchMatch && typeMatch && statusMatch;
     });
-  }, [searchQuery, filters]);
+  }, [searchQuery, filters, incidents]);
 
   const handleMarkerClick = (incident: Incident) => {
     setSelectedIncident(incident);
@@ -92,10 +109,16 @@ export default function Home() {
         </header>
 
         <main className="flex-grow pt-40 overflow-hidden">
-          <MapView
-            incidents={filteredIncidents}
-            onMarkerClick={handleMarkerClick}
-          />
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <Skeleton className="w-full h-full" />
+            </div>
+          ) : (
+            <MapView
+              incidents={filteredIncidents}
+              onMarkerClick={handleMarkerClick}
+            />
+          )}
         </main>
 
         <Button

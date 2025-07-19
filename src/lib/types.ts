@@ -12,6 +12,6 @@ export type Incident = {
   };
   title: string;
   description: string;
-  timestamp: string;
-  imageUrl?: string; // Added this line to make imageUrl an optional string property
+  timestamp: string; // ISO 8601 string format
+  imageUrl?: string;
 };
