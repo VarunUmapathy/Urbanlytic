@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { PhoneLayout } from "@/components/phone-layout";
 import { UrbanPulseLogo } from "@/components/icons";
-import { getIncidents } from "@/services/incidents";
+import { getUserReports } from "@/services/incidents";
 import type { Incident, IncidentType } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,6 +13,7 @@ import {
   Clock,
   CircleAlert,
   CheckCircle,
+  Pencil,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -29,16 +30,36 @@ const incidentTypeConfig: Record<
     color: "text-destructive",
     label: "Traffic Incident",
   },
-  safety: { icon: ShieldAlert, color: "text-accent-foreground", label: "Safety Concern" },
+  safety: {
+    icon: ShieldAlert,
+    color: "text-accent-foreground",
+    label: "Safety Concern",
+  },
   infrastructure: {
     icon: Construction,
     color: "text-primary",
     label: "Infrastructure Issue",
   },
+  road_hazard: {
+    icon: CircleAlert,
+    color: "text-destructive",
+    label: "Road Hazard",
+  },
+  pothole: {
+    icon: CircleAlert,
+    color: "text-destructive",
+    label: "Pothole",
+  },
+  public_disturbance: {
+    icon: ShieldAlert,
+    color: "text-accent-foreground",
+    label: "Public Disturbance",
+  },
+  accident: { icon: Car, color: "text-destructive", label: "Accident" },
 };
 
 function ReportItem({ incident }: { incident: Incident }) {
-  const config = incidentTypeConfig[incident.type];
+  const config = incidentTypeConfig[incident.type] || incidentTypeConfig['infrastructure'];
 
   return (
     <Card>
@@ -58,18 +79,17 @@ function ReportItem({ incident }: { incident: Incident }) {
               addSuffix: true,
             })}
           </div>
-           <Badge
-                variant={incident.status === "active" ? "destructive" : "secondary"}
-                className="gap-1.5"
-              >
-                {incident.status === "active" ? (
-                  <CircleAlert className="h-3 w-3" />
-                ) : (
-                  <CheckCircle className="h-3 w-3" />
-                )}
-                {incident.status.charAt(0).toUpperCase() +
-                  incident.status.slice(1)}
-              </Badge>
+          <Badge
+            variant={incident.status === "active" ? "destructive" : "secondary"}
+            className="gap-1.5"
+          >
+            {incident.status === "active" ? (
+              <Pencil className="h-3 w-3" />
+            ) : (
+              <CheckCircle className="h-3 w-3" />
+            )}
+            {incident.status.charAt(0).toUpperCase() + incident.status.slice(1)}
+          </Badge>
         </div>
         <Separator className="my-2" />
         <p className="text-muted-foreground leading-relaxed">
@@ -87,10 +107,8 @@ export default function MyReportsPage() {
   useEffect(() => {
     async function fetchMyReports() {
       try {
-        // In a real app, you'd filter for the logged-in user.
-        // For now, we'll fetch all and slice.
-        const fetchedIncidents = await getIncidents();
-        setMyReports(fetchedIncidents.slice(0, 3));
+        const fetchedIncidents = await getUserReports();
+        setMyReports(fetchedIncidents);
       } catch (error) {
         console.error("Failed to fetch reports:", error);
       } finally {

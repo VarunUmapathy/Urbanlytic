@@ -8,7 +8,7 @@ export type Incident = {
   severity: "low" | "medium" | "high";
   location: {
     lat: number;
-    lng: number;
+    lng: aumber;
   };
   title: string;
   description: string;
