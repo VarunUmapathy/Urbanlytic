@@ -12,11 +12,12 @@ import {
   Construction,
   ShieldAlert,
   Loader2,
+  CircleAlert,
 } from "lucide-react";
 import type { Incident, IncidentType } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
-const Maps_API_KEY = process.env.NEXT_PUBLIC_Maps_API_KEY || "";
+const Maps_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "";
 
 const libraries: Libraries = ["places", "marker"];
 
@@ -31,6 +32,10 @@ const incidentTypeConfig: Record<
     color: "#3b82f6", // primary
     label: "Infrastructure",
   },
+  road_hazard: { icon: CircleAlert, color: "#ef4444", label: "Road Hazard" },
+  accident: { icon: Car, color: "#ef4444", label: "Accident" },
+  pothole: { icon: CircleAlert, color: "#ef4444", label: "Pothole" },
+  public_disturbance: { icon: ShieldAlert, color: "#f99800", label: "Public Disturbance" },
 };
 
 const createMarkerIcon = (color: string, status: 'active' | 'resolved') => {
