@@ -34,6 +34,22 @@ const incidentTypeConfig: Record<
     color: "text-primary",
     label: "Infrastructure",
   },
+  road_hazard: {
+    icon: CircleAlert,
+    color: "text-destructive",
+    label: "Road Hazard",
+  },
+  accident: { icon: Car, color: "text-destructive", label: "Accident" },
+  pothole: {
+    icon: CircleAlert,
+    color: "text-destructive",
+    label: "Pothole",
+  },
+  public_disturbance: {
+    icon: ShieldAlert,
+    color: "text-accent-foreground",
+    label: "Public Disturbance",
+  },
 };
 
 function AlertCard({ incident }: { incident: Incident }) {
