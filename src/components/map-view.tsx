@@ -17,7 +17,7 @@ import {
 import type { Incident, IncidentType } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
-const Maps_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "";
+const Maps_API_KEY = process.env.NEXT_PUBLIC_MAPS_API_KEY || "";
 
 const libraries: Libraries = ["places", "marker"];
 
@@ -139,6 +139,7 @@ export function MapView({
       >
         {incidents.map((incident) => {
           const config = incidentTypeConfig[incident.type];
+          if (!config) return null;
           return (
              <Marker
                 key={incident.id}
