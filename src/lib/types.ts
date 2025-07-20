@@ -1,4 +1,4 @@
-export type IncidentType = "traffic" | "safety" | "infrastructure";
+export type IncidentType = "traffic" | "safety" | "infrastructure" | "road_hazard" | "accident" | "pothole" | "public_disturbance";
 export type IncidentStatus = "active" | "resolved";
 
 export type Incident = {
