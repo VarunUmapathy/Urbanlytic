@@ -130,7 +130,10 @@ export function ReportIncidentDialog({
     setIsSubmitting(true);
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 5000,
+          enableHighAccuracy: true,
+        });
       });
 
       const location = new GeoPoint(position.coords.latitude, position.coords.longitude);
@@ -149,13 +152,21 @@ export function ReportIncidentDialog({
         description: "Thank you for helping improve your city!",
       });
       handleClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Submission failed", error);
-      toast({
-        variant: "destructive",
-        title: "Submission Failed",
-        description: "Could not submit your report. Please try again.",
-      });
+       if (error.code === error.PERMISSION_DENIED) {
+         toast({
+          variant: "destructive",
+          title: "Location Access Denied",
+          description: "Please enable location permissions to submit a report.",
+        });
+       } else {
+         toast({
+          variant: "destructive",
+          title: "Submission Failed",
+          description: "Could not submit your report. Please try again.",
+        });
+       }
     } finally {
       setIsSubmitting(false);
     }
