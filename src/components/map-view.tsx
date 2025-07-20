@@ -46,27 +46,6 @@ const incidentTypeConfig: Record<
   public_disturbance: { iconPath: iconPaths.shieldAlert, color: "#f99800", label: "Public Disturbance" },
 };
 
-const createMarkerIcon = (config: { iconPath: string; color: string }, status: 'active' | 'resolved') => {
-  return {
-    path: `M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z`,
-    fillColor: config.color,
-    fillOpacity: status === 'resolved' ? 0.6 : 1.0,
-    strokeColor: "#ffffff",
-    strokeWeight: 1.5,
-    scale: 1.5,
-    anchor: new google.maps.Point(12, 24),
-    labelOrigin: new google.maps.Point(12, 10),
-  };
-};
-
-const createMarkerLabel = (path: string, status: 'active' | 'resolved') => ({
-  text: path,
-  fontFamily: "Material Icons",
-  color: status === 'resolved' ? "#eeeeee" : "#ffffff",
-  fontSize: "14px",
-});
-
-
 export function MapView({
   incidents,
   onMarkerClick,
@@ -184,12 +163,6 @@ export function MapView({
                   scale: 1.8,
                   anchor: new google.maps.Point(12, 24),
                   labelOrigin: new google.maps.Point(12, 10),
-                }}
-                label={{
-                  text: "\ue87c", // Material Icons 'place' icon, a generic placeholder for the pin shape
-                  fontFamily: "Material Icons",
-                  color: config.color,
-                  fontSize: "1px", // Hide the text, we only want the shape
                 }}
              >
                 <Marker
