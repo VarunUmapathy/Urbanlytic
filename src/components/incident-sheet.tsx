@@ -25,11 +25,31 @@ const incidentTypeConfig: Record<
     color: "text-destructive",
     label: "Traffic Incident",
   },
-  safety: { icon: ShieldAlert, color: "text-accent", label: "Safety Concern" },
+  safety: {
+    icon: ShieldAlert,
+    color: "text-accent-foreground",
+    label: "Safety Concern",
+  },
   infrastructure: {
     icon: Construction,
     color: "text-primary",
     label: "Infrastructure Issue",
+  },
+  road_hazard: {
+    icon: CircleAlert,
+    color: "text-destructive",
+    label: "Road Hazard",
+  },
+  accident: { icon: Car, color: "text-destructive", label: "Accident" },
+  pothole: {
+    icon: CircleAlert,
+    color: "text-destructive",
+    label: "Pothole",
+  },
+  public_disturbance: {
+    icon: ShieldAlert,
+    color: "text-accent-foreground",
+    label: "Public Disturbance",
   },
 };
 
