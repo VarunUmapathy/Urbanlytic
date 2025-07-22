@@ -121,12 +121,12 @@ export async function submitUserReport(report: UserReport) {
         try {
             // Convert GeoPoint to a plain object for JSON serialization
             const payload = {
-                ...report,
+                description: report.description,
                 location: {
                     latitude: report.location.latitude,
                     longitude: report.location.longitude,
                 },
-                timestamp: timestamp.toDate().toISOString(),
+                reportedBy: 'anonymous'
             };
 
             const response = await fetch(cloudRunUrl, {
