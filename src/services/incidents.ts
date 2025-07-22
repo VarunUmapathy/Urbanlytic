@@ -107,8 +107,47 @@ export type UserReport = {
 
 export async function submitUserReport(report: UserReport) {
     const reportsCol = collection(db, 'UserReports');
+    const cloudRunUrl = process.env.NEXT_PUBLIC_CLOUD_RUN_URL;
+    const timestamp = Timestamp.now();
+
+    // 1. Submit to Firestore
     await addDoc(reportsCol, {
         ...report,
-        timestamp: Timestamp.now(),
+        timestamp: timestamp,
     });
+
+    // 2. Submit to Google Cloud Run
+    if (cloudRunUrl) {
+        try {
+            // Convert GeoPoint to a plain object for JSON serialization
+            const payload = {
+                ...report,
+                location: {
+                    latitude: report.location.latitude,
+                    longitude: report.location.longitude,
+                },
+                timestamp: timestamp.toDate().toISOString(),
+            };
+
+            const response = await fetch(cloudRunUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Cloud Run service responded with status ${response.status}: ${errorText}`);
+            }
+
+            console.log('Successfully sent report to Cloud Run service.');
+        } catch (error) {
+            console.error('Failed to send report to Cloud Run service:', error);
+            // We can decide if we want to re-throw the error or just log it.
+            // For now, we'll just log it so the user doesn't see a failure
+            // if Firestore succeeded.
+        }
+    }
 }
