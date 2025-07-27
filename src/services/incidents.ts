@@ -3,28 +3,38 @@ import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit
 import type { Incident, IncidentType } from '@/lib/types';
 
 function mapEventTypeToIncidentType(eventType: string): IncidentType {
-    const lowerEventType = eventType.toLowerCase();
-    switch (lowerEventType) {
-        case 'traffic_jam':
-        case 'accident':
-            return 'traffic';
-        case 'suspicious_activity':
-        case 'public_disturbance':
-            return 'safety';
-        case 'road_hazard':
-            return 'road_hazard';
-        case 'pothole':
-            return 'pothole';
-        case 'infrastructure_issue':
-            return 'infrastructure';
-        default:
-            // Attempt to match to an existing IncidentType, otherwise default
-            const validTypes: IncidentType[] = ["traffic", "safety", "infrastructure", "road_hazard", "accident", "pothole", "public_disturbance"];
-            if (validTypes.includes(lowerEventType as IncidentType)) {
-                return lowerEventType as IncidentType;
-            }
-            return 'infrastructure';
+    const lowerEventType = eventType.toLowerCase().replace(/_/g, ' ');
+
+    const mapping: Record<string, IncidentType> = {
+        'traffic jam': 'traffic',
+        'accident': 'accident',
+        'suspicious activity': 'safety',
+        'public disturbance': 'public_disturbance',
+        'road hazard': 'road_hazard',
+        'pothole': 'pothole',
+        'infrastructure issue': 'infrastructure',
+        'traffic': 'traffic',
+        'safety': 'safety',
+        'infrastructure': 'infrastructure'
+    };
+
+    const directMatch = (Object.keys(mapping) as Array<keyof typeof mapping>).find(key => key === lowerEventType);
+    if(directMatch) {
+        return mapping[directMatch];
     }
+
+    // Fallback for snake_case and other variations
+    const snakeCaseMatch = (Object.keys(mapping) as Array<keyof typeof mapping>).find(key => key === lowerEventType.replace(/_/g, ' '));
+     if(snakeCaseMatch) {
+        return mapping[snakeCaseMatch];
+    }
+    
+    const validTypes: IncidentType[] = ["traffic", "safety", "infrastructure", "road_hazard", "accident", "pothole", "public_disturbance"];
+    if (validTypes.includes(eventType as IncidentType)) {
+        return eventType as IncidentType;
+    }
+
+    return 'infrastructure'; // Default fallback
 }
 
 export async function getIncidents(): Promise<Incident[]> {
@@ -114,6 +124,7 @@ export async function submitUserReport(report: UserReport) {
     await addDoc(reportsCol, {
         ...report,
         timestamp: timestamp,
+        eventType: report.type // Make sure eventType is consistent
     });
 
     // 2. Submit to Google Cloud Run
@@ -126,7 +137,8 @@ export async function submitUserReport(report: UserReport) {
                     latitude: report.location.latitude,
                     longitude: report.location.longitude,
                 },
-                reportedBy: 'anonymous'
+                reportedBy: 'anonymous',
+                eventType: report.type
             };
 
             const response = await fetch(cloudRunUrl, {
