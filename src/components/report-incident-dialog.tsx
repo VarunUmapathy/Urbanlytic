@@ -27,13 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { submitUserReport, type UserReport } from "@/services/incidents";
 import { GeoPoint } from "firebase/firestore";
+import { cn } from "@/lib/utils";
 
 const ReportSchema = z.object({
   type: z.enum(
@@ -74,8 +75,11 @@ export function ReportIncidentDialog({
     }
   };
 
-  const handleClose = () => {
-    onOpenChange(false);
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      resetState();
+    }
+    onOpenChange(isOpen);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,7 +117,7 @@ export function ReportIncidentDialog({
         title: "Report Submitted",
         description: "Thank you for helping improve your city!",
       });
-      handleClose();
+      onOpenChange(false);
     } catch (error: any) {
       console.error("Submission failed", error);
        if (error.code === error.PERMISSION_DENIED) {
@@ -134,19 +138,30 @@ export function ReportIncidentDialog({
     }
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()} onAnimationEnd={() => !open && resetState()}>
-      <DialogContent className="sm:max-w-[425px] w-[calc(100%-2rem)] sm:w-full bottom-0 sm:bottom-auto translate-y-0 sm:-translate-y-1/2 rounded-b-none sm:rounded-lg">
+    <div
+      className={cn(
+        "absolute inset-0 z-40 bg-black/50 transition-opacity flex items-center justify-center p-4",
+        open ? "opacity-100" : "opacity-0 pointer-events-none"
+      )}
+      onClick={() => handleClose(false)}
+    >
+      <div
+        className="w-full max-w-md bg-background rounded-xl shadow-lg flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <DialogHeader>
+            <DialogHeader className="p-6 pb-2 text-left">
               <DialogTitle>Report an Incident</DialogTitle>
               <DialogDescription>
                 Help improve your city by filling out the details below.
               </DialogDescription>
             </DialogHeader>
             
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-4 px-6">
               <div className="grid w-full items-center gap-1.5">
                 <FormLabel>Media (Photo/Video)</FormLabel>
                 <Button asChild variant="outline" className="w-full">
@@ -215,7 +230,8 @@ export function ReportIncidentDialog({
               />
             </div>
             
-            <DialogFooter>
+            <DialogFooter className="p-6 pt-4">
+              <Button type="button" variant="ghost" onClick={() => handleClose(false)} disabled={isSubmitting}>Cancel</Button>
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Submit Report
@@ -223,7 +239,7 @@ export function ReportIncidentDialog({
             </DialogFooter>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
