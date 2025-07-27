@@ -55,7 +55,7 @@ export async function getIncidents(): Promise<Incident[]> {
       severity: severity,
       location: location,
       title: data.summary || "Incident Report",
-      description: data.description || 'No description provided.',
+      description: data.aiGeneratedSummary || data.description || 'No description provided.',
       timestamp: timestamp,
       imageUrl: data.imageUrl,
     } as Incident;
