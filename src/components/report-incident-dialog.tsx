@@ -1,14 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -27,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -154,12 +146,12 @@ export function ReportIncidentDialog({
       >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <DialogHeader className="p-6 pb-2 text-left">
-              <DialogTitle>Report an Incident</DialogTitle>
-              <DialogDescription>
+            <div className="p-6 pb-2 text-left">
+              <h3 className="text-lg font-semibold leading-none tracking-tight">Report an Incident</h3>
+              <p className="text-sm text-muted-foreground mt-1.5">
                 Help improve your city by filling out the details below.
-              </DialogDescription>
-            </DialogHeader>
+              </p>
+            </div>
             
             <div className="grid gap-4 px-6">
               <div className="grid w-full items-center gap-1.5">
@@ -230,13 +222,13 @@ export function ReportIncidentDialog({
               />
             </div>
             
-            <DialogFooter className="p-6 pt-4">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 pt-4">
               <Button type="button" variant="ghost" onClick={() => handleClose(false)} disabled={isSubmitting}>Cancel</Button>
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Submit Report
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
       </div>
