@@ -67,7 +67,7 @@ export function MapView({
   }, []);
 
   useEffect(() => {
-    if ("geolocation" in navigator) {
+    if (isClient && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setMapCenter({
@@ -85,7 +85,7 @@ export function MapView({
           setMapCenter({ lat: 13.0827, lng: 80.2707 }); // Fallback to Chennai
         }
       );
-    } else {
+    } else if (isClient) {
       toast({
         variant: "destructive",
         title: "Geolocation Not Supported",
@@ -94,7 +94,7 @@ export function MapView({
       });
       setMapCenter({ lat: 13.0827, lng: 80.2707 }); // Fallback to Chennai
     }
-  }, [toast]);
+  }, [toast, isClient]);
 
   const mapOptions = useMemo(
     () => ({
