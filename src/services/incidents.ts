@@ -1,3 +1,4 @@
+
 import { db } from '@/lib/firebase';
 import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import type { Incident, IncidentType } from '@/lib/types';
@@ -43,19 +44,24 @@ export async function getIncidents(): Promise<Incident[]> {
   const incidents = eventSnapshot.docs.map(doc => {
     const data = doc.data();
     
+    // Attribute: `firestoreCreatedAt` (as Timestamp)
     const timestamp = data.firestoreCreatedAt instanceof Timestamp 
       ? data.firestoreCreatedAt.toDate().toISOString() 
       : new Date().toISOString();
     
     let location = { lat: 13.0827, lng: 80.2707 }; // Default location
+    // Attribute: `location` (as GeoPoint)
     if (data.location instanceof GeoPoint) {
       location = { lat: data.location.latitude, lng: data.location.longitude };
     }
 
+    // Attribute: `eventType` (as string)
     const eventType = data.eventType || 'unknown';
     const type = mapEventTypeToIncidentType(eventType);
     
+    // Attribute: `status` (as string)
     const status = (data.status?.toLowerCase() === 'resolved') ? 'resolved' : 'active';
+    // Attribute: `severity` (as string)
     const severity = (data.severity?.toLowerCase() || 'medium') as "low" | "medium" | "high";
 
     return {
@@ -64,9 +70,12 @@ export async function getIncidents(): Promise<Incident[]> {
       status: status,
       severity: severity,
       location: location,
+      // Attribute: `summary` (as string)
       title: data.summary || "Incident Report",
+      // Attributes: `aiGeneratedSummary` and `description` (as strings)
       description: data.aiGeneratedSummary || data.description || 'No description provided.',
       timestamp: timestamp,
+      // Attribute: `imageUrl` (as string, optional)
       imageUrl: data.imageUrl,
     } as Incident;
   });
