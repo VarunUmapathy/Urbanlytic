@@ -150,7 +150,7 @@ export async function submitUserReport(report: UserReport) {
                 eventType: report.type
             };
             
-            const submissionUrl = `${cloudRunUrl.replace(/\/$/, '')}/report`;
+            const submissionUrl = `${cloudRunUrl.replace(/\/$/, '')}/ingest`;
 
             const response = await fetch(submissionUrl, {
                 method: 'POST',
@@ -171,6 +171,7 @@ export async function submitUserReport(report: UserReport) {
             // We can decide if we want to re-throw the error or just log it.
             // For now, we'll just log it so the user doesn't see a failure
             // if Firestore succeeded.
+            throw error;
         }
     }
 }
