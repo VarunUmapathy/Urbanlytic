@@ -118,11 +118,18 @@ export function ReportIncidentDialog({
           title: "Location Access Denied",
           description: "Please enable location permissions to submit a report.",
         });
+       } else if (error.message.includes('Failed to fetch')) {
+        toast({
+          variant: "destructive",
+          title: "Network Error",
+          description: "Could not reach the server. This might be a CORS issue or a network problem.",
+          duration: 9000,
+        });
        } else {
          toast({
           variant: "destructive",
           title: "Submission Failed",
-          description: "Could not submit your report. Please try again.",
+          description: error.message || "Could not submit your report. Please try again.",
         });
        }
     } finally {
