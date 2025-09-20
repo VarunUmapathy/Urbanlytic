@@ -2,15 +2,17 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
+// Your web app's Firebase configuration from your new project
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_MEASUREMENT_ID
+  apiKey: "AIzaSyAQM4NcOrgkrERq8yORoXvvrNmkcLA_t8g",
+  authDomain: "oval-bot-472512-s4.firebaseapp.com",
+  projectId: "oval-bot-472512-s4",
+  storageBucket: "oval-bot-472512-s4.appspot.com",
+  messagingSenderId: "883976203495",
+  appId: "1:883976203495:web:d1df31aeae53e4c00f8642",
+  measurementId: "G-MYL5XLGRQL"
 };
+
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
