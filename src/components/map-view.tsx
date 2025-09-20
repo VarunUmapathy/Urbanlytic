@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   GoogleMap,
   useLoadScript,
@@ -13,9 +13,11 @@ import {
   ShieldAlert,
   Loader2,
   CircleAlert,
+  LocateFixed,
 } from "lucide-react";
 import type { Incident, IncidentType } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "./ui/button";
 
 const Maps_API_KEY = process.env.NEXT_PUBLIC_MAPS_API_KEY || "";
 
@@ -58,43 +60,46 @@ export function MapView({
     libraries,
   });
 
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 13.0827, lng: 80.2707 }); // Default to Chennai
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  useEffect(() => {
-    if (isClient && "geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setMapCenter({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-        },
-        () => {
-          toast({
-            variant: "destructive",
-            title: "Location Access Denied",
-            description:
-              "Could not access your location. Displaying a default location.",
-          });
-          setMapCenter({ lat: 13.0827, lng: 80.2707 }); // Fallback to Chennai
-        }
-      );
-    } else if (isClient) {
-      toast({
+  const handleLocationRequest = useCallback(() => {
+    if (!("geolocation" in navigator)) {
+       toast({
         variant: "destructive",
         title: "Geolocation Not Supported",
         description:
-          "Your browser does not support geolocation. Displaying a default location.",
+          "Your browser does not support geolocation.",
       });
-      setMapCenter({ lat: 13.0827, lng: 80.2707 }); // Fallback to Chennai
+      return;
     }
-  }, [toast, isClient]);
+    
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setMapCenter({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        setIsLocating(false);
+      },
+      () => {
+        toast({
+          variant: "destructive",
+          title: "Location Access Denied",
+          description: "Please enable location access in your browser settings.",
+        });
+        setIsLocating(false);
+      }
+    );
+  }, [toast]);
+
 
   const mapOptions = useMemo(
     () => ({
@@ -117,7 +122,7 @@ export function MapView({
     );
   }
 
-  if (!isLoaded || !mapCenter || !isClient) {
+  if (!isLoaded || !isClient) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -177,6 +182,16 @@ export function MapView({
           );
         })}
       </GoogleMap>
+       <Button
+        size="icon"
+        variant="secondary"
+        className="absolute bottom-4 right-4 z-10 shadow-lg"
+        onClick={handleLocationRequest}
+        disabled={isLocating}
+      >
+        {isLocating ? <Loader2 className="h-5 w-5 animate-spin" /> : <LocateFixed className="h-5 w-5" />}
+        <span className="sr-only">Use My Location</span>
+      </Button>
     </div>
   );
 }
