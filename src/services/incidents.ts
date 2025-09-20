@@ -149,8 +149,10 @@ export async function submitUserReport(report: UserReport) {
                 reportedBy: 'anonymous',
                 eventType: report.type
             };
+            
+            const submissionUrl = `${cloudRunUrl.replace(/\/$/, '')}/report`;
 
-            const response = await fetch(cloudRunUrl, {
+            const response = await fetch(submissionUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
