@@ -30,8 +30,7 @@ export interface UserReport {
 
 // --- CONFIGURATION ---
 
-// TODO: Replace with the correct full endpoint URL, including the path (e.g., /submit).
-const CLOUD_SERVICE_ENDPOINT = "https://data-ingestor-883976203495.asia-south1.run.app/submit";
+const CLOUD_SERVICE_ENDPOINT = "https://data-ingestor-883976203495.asia-south1.run.app/ingest";
 
 
 // --- UTILITY FUNCTIONS ---
@@ -175,26 +174,21 @@ export async function submitUserReport(report: UserReport): Promise<{ success: b
             },
         };
         
-        // --- This part is commented out to prevent 404 errors. ---
-        // --- Uncomment it after you confirm the correct CLOUD_SERVICE_ENDPOINT path. ---
-        /*
         const cloudServicePromise = fetch(CLOUD_SERVICE_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
         }).then(response => {
             if (!response.ok) {
-                throw new Error(`Cloud Service returned an error: ${response.status} ${response.statusText}`);
+                return response.text().then(text => {
+                   throw new Error(`Cloud Service returned an error: ${response.status} ${response.statusText} - ${text}`);
+                });
             }
             return response.json();
         });
-        */
 
-        // Execute only the Firestore submission for now
-        await firestorePromise;
-        
-        // When ready, use Promise.all to ensure both succeed
-        // await Promise.all([firestorePromise, cloudServicePromise]);
+        // Use Promise.all to ensure both succeed
+        await Promise.all([firestorePromise, cloudServicePromise]);
 
         return { success: true };
 
