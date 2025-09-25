@@ -4,6 +4,7 @@
 
 
 
+
 // src/lib/firebaseService.ts
 
 import { db, storage } from '@/lib/firebase';
@@ -88,9 +89,7 @@ export async function getIncidents(): Promise<Incident[]> {
       : new Date().toISOString();
     
     let location = { lat: 13.0827, lng: 80.2707 }; // Default location
-    if (data.location && typeof data.location.latitude === 'number' && typeof data.location.longitude === 'number') {
-        location = { lat: data.location.latitude, lng: data.location.longitude };
-    } else if (data.location instanceof GeoPoint) {
+    if (data.location && data.location.latitude && data.location.longitude) {
         location = { lat: data.location.latitude, lng: data.location.longitude };
     }
 
