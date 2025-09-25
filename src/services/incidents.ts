@@ -2,6 +2,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 // --- TYPE DEFINITIONS ---
 
@@ -134,7 +135,7 @@ export async function getUserReports(): Promise<Incident[]> {
 // --- CORE SUBMISSION LOGIC ---
 
 /**
- * Submits the user report metadata to the 'UserReports' collection in Firestore.
+ * Submits the user report to Firestore and a Google Cloud service endpoint.
  * @param report The report object containing metadata.
  * @returns A promise that resolves with the success status.
  */
@@ -142,14 +143,51 @@ export async function submitUserReport(report: UserReport): Promise<{ success: b
     try {
         const reportsCol = collection(db, 'UserReports');
         const timestamp = Timestamp.now();
+        const auth = getAuth();
+        const user = auth.currentUser;
 
-        await addDoc(reportsCol, {
+        // 1. Submit to Firestore
+        const firestorePromise = addDoc(reportsCol, {
             ...report,
+            userId: user?.uid || null,
+            userEmail: user?.email || null,
             timestamp: timestamp,
             eventType: report.type 
         });
 
+        // 2. Submit to Google Cloud Service Endpoint
+        const cloudServiceEndpoint = 'https://data-ingestor-883976203495.asia-south1.run.app';
+        
+        const payload = {
+            ...report,
+            userId: user?.uid || null,
+            userEmail: user?.email || null,
+            timestamp: timestamp.toDate().toISOString(),
+            location: {
+                latitude: report.location.latitude,
+                longitude: report.location.longitude,
+            },
+            eventType: report.type,
+        };
+
+        const cloudServicePromise = fetch(cloudServiceEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error(`Cloud service submission failed with status: ${response.status}`);
+            }
+            return response.json();
+        });
+
+        // Await both promises to complete
+        await Promise.all([firestorePromise, cloudServicePromise]);
+
         return { success: true };
+
     } catch (error) {
         console.error("Error in submitUserReport:", error);
         return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
