@@ -138,7 +138,7 @@ export function MapView({
             strokeWeight: 0,
             rotation: 0,
             scale: 0.8,
-            anchor: new google.maps.Point(12, 12),
+            anchor: new google.maps.Point(12, 11),
           };
 
           return (
