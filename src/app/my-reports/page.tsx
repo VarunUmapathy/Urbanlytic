@@ -124,7 +124,7 @@ export default function MyReportsPage() {
       <Header title="My Reports" />
 
       <main className="flex-grow pt-16 overflow-y-auto">
-        <div className="space-y-4 p-4">
+        <div className="p-4 space-y-4">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-36 w-full rounded-lg" />

@@ -113,7 +113,7 @@ function AlertCard({ incident }: { incident: Incident }) {
                 <Image
                   src={incident.imageUrl}
                   alt={incident.title}
-                  layout="fill"
+                  fill
                   objectFit="cover"
                 />
               </div>
@@ -158,7 +158,7 @@ export default function AlertsPage() {
       <Header title="Nearby Alerts" />
 
       <main className="flex-grow pt-16 overflow-y-auto bg-muted/30">
-        <div className="space-y-4 p-4">
+        <div className="p-4 space-y-4">
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-40 w-full rounded-lg" />
