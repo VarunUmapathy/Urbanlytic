@@ -3,7 +3,7 @@
 // src/lib/firebaseService.ts
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit, doc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 // --- TYPE DEFINITIONS ---
@@ -108,6 +108,10 @@ export async function getIncidents(): Promise<Incident[]> {
 }
 
 export async function getUserReports(): Promise<Incident[]> {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) return [];
+
   const reportsCol = collection(db, 'UserReports');
   const q = query(reportsCol, orderBy('timestamp', 'desc'), limit(10));
   const reportSnapshot = await getDocs(q);
@@ -129,7 +133,7 @@ export async function getUserReports(): Promise<Incident[]> {
     return {
       id: doc.id,
       type: type,
-      status: data.status || 'active', // Use status from DB, fallback to 'active'
+      status: data.status || 'active',
       severity: 'medium',
       location: location,
       title: data.type || "User Report",
@@ -153,19 +157,19 @@ export async function submitUserReport(report: UserReport): Promise<{ success: b
         const user = auth.currentUser;
         const timestamp = Timestamp.now();
 
-        // 1. Prepare data for Firestore
-        const firestorePromise = addDoc(collection(db, 'UserReports'), {
+        // 1. Save to Firestore first to get the document ID
+        const firestoreDoc = await addDoc(collection(db, 'UserReports'), {
             ...report,
             userId: user?.uid || null,
             userEmail: user?.email || null,
             timestamp: timestamp,
-            eventType: report.type,
-            status: 'active' // Add status field for Firestore
+            status: 'active'
         });
 
-        // 2. Prepare data for Cloud Service
+        // 2. Prepare data for Cloud Service, now including the Firestore Document ID
         const payload = {
             ...report,
+            firestoreDocId: firestoreDoc.id, // Add the document ID here
             userId: user?.uid || null,
             userEmail: user?.email || null,
             timestamp: timestamp.toDate().toISOString(),
@@ -175,21 +179,17 @@ export async function submitUserReport(report: UserReport): Promise<{ success: b
             },
         };
         
-        const cloudServicePromise = fetch(CLOUD_SERVICE_ENDPOINT, {
+        // 3. Send to Cloud Service
+        const cloudServiceResponse = await fetch(CLOUD_SERVICE_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-        }).then(response => {
-            if (!response.ok) {
-                return response.text().then(text => {
-                   throw new Error(`Cloud Service returned an error: ${response.status} ${response.statusText} - ${text}`);
-                });
-            }
-            return response.json();
         });
 
-        // Use Promise.all to ensure both succeed
-        await Promise.all([firestorePromise, cloudServicePromise]);
+        if (!cloudServiceResponse.ok) {
+            const errorText = await cloudServiceResponse.text();
+            throw new Error(`Cloud Service returned an error: ${cloudServiceResponse.status} ${cloudServiceResponse.statusText} - ${errorText}`);
+        }
 
         return { success: true };
 
