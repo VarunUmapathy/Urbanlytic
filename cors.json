@@ -1,7 +1,8 @@
 
 [
   {
-    "origin": ["https://6000-firebase-studio-1752665782523.cluster-6dx7corvpngoivimwvvljgokdw.cloudworkstations.dev"],
+    "origin": ["https://9000-firebase-studio-1752665782523.cluster-6dx7corvpngoivimwvvljgokdw.cloudworkstations.dev",
+      "http://localhost:3000"],
     "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
     "responseHeader": [
       "Content-Type",
