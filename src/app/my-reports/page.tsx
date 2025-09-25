@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/firebase/provider";
 
 const incidentTypeConfig: Record<
   IncidentType,
@@ -115,9 +116,11 @@ function ReportItem({ incident }: { incident: Incident }) {
 export default function MyReportsPage() {
   const [myReports, setMyReports] = useState<Incident[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     async function fetchMyReports() {
+      if (!user) return;
       try {
         const fetchedIncidents = await getUserReports();
         setMyReports(fetchedIncidents);
@@ -128,7 +131,7 @@ export default function MyReportsPage() {
       }
     }
     fetchMyReports();
-  }, []);
+  }, [user]);
 
   return (
     <PhoneLayout>
