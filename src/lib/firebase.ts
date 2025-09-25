@@ -14,20 +14,9 @@ const firebaseConfig = {
   measurementId: "G-MYL5XLGRQL"
 };
 
-let app: FirebaseApp;
-let db: Firestore;
-let storage: FirebaseStorage;
-
-try {
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  db = getFirestore(app);
-  storage = getStorage(app);
-} catch (error) {
-  console.error("Firebase initialization error", error);
-  // You might want to throw the error or handle it in a way
-  // that your application can gracefully fail.
-  // For now, we'll log it and the app will likely fail
-  // when db or storage are used.
-}
+// Initialize Firebase
+const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const db: Firestore = getFirestore(app);
+const storage: FirebaseStorage = getStorage(app);
 
 export { db, storage };

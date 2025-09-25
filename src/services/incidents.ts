@@ -1,6 +1,6 @@
 // src/lib/firebaseService.ts
 
-import { db, storage } from '@/lib/firebase'; // Assuming your firebase config is in this path
+import { db, storage } from '@/lib/firebase';
 import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
@@ -139,6 +139,9 @@ export async function getUserReports(): Promise<Incident[]> {
  * @returns A promise that resolves with the public download URL of the uploaded file.
  */
 export const uploadFile = async (file: File): Promise<string> => {
+  if (!file) {
+    throw new Error("No file provided for upload.");
+  }
   const storageRef = ref(storage, `reports/${Date.now()}-${file.name}`);
   await uploadBytes(storageRef, file);
   const downloadUrl = await getDownloadURL(storageRef);
@@ -161,66 +164,9 @@ export async function submitUserReport(report: UserReport): Promise<{ success: b
             eventType: report.type 
         });
 
-        // The optional Cloud Run submission logic can remain here
-        // ...
-
         return { success: true };
     } catch (error) {
         console.error("Error in submitUserReport:", error);
-        return { success: false, error: error as Error };
+        return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
     }
 }
-
-
-// --- NEW ORCHESTRATOR FUNCTION (CALL THIS FROM YOUR UI) ---
-
-/**
- * Handles the full report submission process: uploads file, then submits report data.
- * @param type The type of incident reported by the user.
- * @param description The text description from the user.
- * @param location The geographic coordinates of the incident.
- * @param file The image file uploaded by the user (can be null).
- * @returns A promise that resolves with the final success status.
- */
-export const handleNewReportSubmission = async (
-    type: IncidentType,
-    description: string,
-    location: { latitude: number, longitude: number },
-    file: File | null
-): Promise<{ success: boolean, error?: any }> => {
-    try {
-        let imageUrls: string[] = [];
-
-        // Step 1: Upload the file to Firebase Storage if it exists
-        if (file) {
-            console.log("Uploading file...");
-            const downloadUrl = await uploadFile(file);
-            imageUrls.push(downloadUrl);
-            console.log("File uploaded successfully:", downloadUrl);
-        }
-
-        // Step 2: Prepare the report object for Firestore
-        const newReport: UserReport = {
-            type,
-            description,
-            location: new GeoPoint(location.latitude, location.longitude),
-            mediaUrls: imageUrls, // Use the URL from the upload
-        };
-
-        // Step 3: Submit the complete report metadata to Firestore
-        console.log("Submitting report to Firestore...");
-        const result = await submitUserReport(newReport);
-
-        if (result.success) {
-            console.log("Report submitted successfully!");
-            return { success: true };
-        } else {
-            // Propagate the error from the submission function
-            throw result.error;
-        }
-
-    } catch (error) {
-        console.error("Failed to submit new report:", error);
-        return { success: false, error };
-    }
-};

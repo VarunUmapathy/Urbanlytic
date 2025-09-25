@@ -87,65 +87,65 @@ export function ReportIncidentDialog({
   
   const onSubmit = async (values: ReportFormValues) => {
     setIsSubmitting(true);
-    let location: GeoPoint;
-    let mediaUrl = "";
-
     try {
-      // Step 1: Get Location
-      try {
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            timeout: 10000,
-            enableHighAccuracy: true,
-          });
-        });
-        location = new GeoPoint(position.coords.latitude, position.coords.longitude);
-      } catch (error: any) {
-        throw new Error(`Location Error: ${error.message}`);
-      }
+        let location: GeoPoint;
+        let mediaUrl = "";
 
-      // Step 2: Upload Media if it exists
-      if (values.media) {
+        // Step 1: Get Location
         try {
-          mediaUrl = await uploadFile(values.media);
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    timeout: 10000,
+                    enableHighAccuracy: true,
+                });
+            });
+            location = new GeoPoint(position.coords.latitude, position.coords.longitude);
         } catch (error: any) {
-          throw new Error(`File Upload Error: ${error.message}`);
+            throw new Error(`Location Error: ${error.message}`);
         }
-      }
 
-      // Step 3: Submit the final report
-      const reportData: UserReport = {
-        type: values.type,
-        description: values.description,
-        location: location,
-        mediaUrls: mediaUrl ? [mediaUrl] : [],
-      };
-
-      try {
-        const { success, error } = await submitUserReport(reportData);
-        if (!success) {
-          throw error || new Error("An unknown error occurred during submission.");
+        // Step 2: Upload Media if it exists
+        if (values.media) {
+            try {
+                mediaUrl = await uploadFile(values.media);
+            } catch (error: any) {
+                throw new Error(`File Upload Error: ${error.message}`);
+            }
         }
-      } catch (error: any) {
-        throw new Error(`Submission Error: ${error.message}`);
-      }
-      
-      toast({
-        title: "Report Submitted",
-        description: "Thank you for helping improve your city!",
-      });
-      handleClose(false);
+
+        // Step 3: Submit the final report
+        const reportData: UserReport = {
+            type: values.type,
+            description: values.description,
+            location: location,
+            mediaUrls: mediaUrl ? [mediaUrl] : [],
+        };
+        
+        try {
+          const { success, error } = await submitUserReport(reportData);
+          if (!success) {
+              throw error || new Error("An unknown error occurred during submission.");
+          }
+        } catch(error: any) {
+          throw new Error(`Submission Error: ${error.message}`);
+        }
+
+        toast({
+            title: "Report Submitted",
+            description: "Thank you for helping improve your city!",
+        });
+        handleClose(false);
 
     } catch (error: any) {
-      console.error("Submission failed", error);
-      toast({
-        variant: "destructive",
-        title: "Submission Failed",
-        description: error.message || "Could not submit your report. Please try again.",
-        duration: 9000,
-      });
+        console.error("Submission failed", error);
+        toast({
+            variant: "destructive",
+            title: "Submission Failed",
+            description: error.message || "Could not submit your report. Please try again.",
+            duration: 9000,
+        });
     } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
     }
   };
 
