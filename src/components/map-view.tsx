@@ -13,11 +13,9 @@ import {
   ShieldAlert,
   Loader2,
   CircleAlert,
-  LocateFixed,
 } from "lucide-react";
 import type { Incident, IncidentType } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "./ui/button";
 
 const Maps_API_KEY = process.env.NEXT_PUBLIC_MAPS_API_KEY || "";
 
@@ -63,13 +61,10 @@ export function MapView({
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 13.0827, lng: 80.2707 }); // Default to Chennai
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
-
-  const handleLocationRequest = useCallback(() => {
+    
     if (!("geolocation" in navigator)) {
        toast({
         variant: "destructive",
@@ -80,22 +75,15 @@ export function MapView({
       return;
     }
     
-    setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setMapCenter({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
-        setIsLocating(false);
       },
       () => {
-        toast({
-          variant: "destructive",
-          title: "Location Access Denied",
-          description: "Please enable location access in your browser settings.",
-        });
-        setIsLocating(false);
+        // We can keep the default center (Chennai) if user denies location
       }
     );
   }, [toast]);
@@ -182,16 +170,6 @@ export function MapView({
           );
         })}
       </GoogleMap>
-       <Button
-        size="icon"
-        variant="secondary"
-        className="absolute bottom-4 right-4 z-10 shadow-lg"
-        onClick={handleLocationRequest}
-        disabled={isLocating}
-      >
-        {isLocating ? <Loader2 className="h-5 w-5 animate-spin" /> : <LocateFixed className="h-5 w-5" />}
-        <span className="sr-only">Use My Location</span>
-      </Button>
     </div>
   );
 }
