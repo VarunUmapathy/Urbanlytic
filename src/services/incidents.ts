@@ -145,10 +145,11 @@ export async function getUserReports(): Promise<Incident[]> {
   if (!user) return [];
 
   const reportsCol = collection(db, 'UserReports');
-  const q = query(reportsCol, where("userId", "==", user.uid), orderBy('timestamp', 'desc'), limit(20));
+  // The composite index is not available, so we filter first and then sort in code.
+  const q = query(reportsCol, where("userId", "==", user.uid));
   const reportSnapshot = await getDocs(q);
 
-  return reportSnapshot.docs.map(doc => {
+  const reports = reportSnapshot.docs.map(doc => {
     const data = doc.data();
     
     const timestamp = data.timestamp instanceof Timestamp 
@@ -176,6 +177,9 @@ export async function getUserReports(): Promise<Incident[]> {
       reason: data.reason || undefined,
     } as Incident;
   });
+
+  // Sort the reports by timestamp in descending order on the client-side
+  return reports.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 
 
