@@ -1,3 +1,4 @@
+
 "use client";
 
 import { LayoutGrid, ListChecks, Bell, User } from "lucide-react";
@@ -6,17 +7,40 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getIncidents } from "@/services/incidents";
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [activeAlerts, setActiveAlerts] = useState(0);
+
+  useEffect(() => {
+    const fetchActiveAlerts = async () => {
+      try {
+        const incidents = await getIncidents();
+        const activeCount = incidents.filter(
+          (i) => i.status === "active"
+        ).length;
+        setActiveAlerts(activeCount);
+      } catch (error) {
+        console.error("Failed to fetch active alerts count", error);
+      }
+    };
+    fetchActiveAlerts();
+    
+    // Optional: Poll for new alerts periodically
+    const interval = setInterval(fetchActiveAlerts, 60000); // every minute
+    return () => clearInterval(interval);
+
+  }, []);
 
   const navItems = [
-    { name: "Home", href: "/", icon: LayoutGrid, notificationCount: 0 },
-    { name: "My Reports", href: "/my-reports", icon: ListChecks, notificationCount: 0 },
-    { name: "Alerts", href: "/alerts", icon: Bell, notificationCount: 3 },
-    { name: "Profile", href: "/login", icon: User, notificationCount: 0 },
+    { name: "Home", href: "/", icon: LayoutGrid },
+    { name: "My Reports", href: "/my-reports", icon: ListChecks },
+    { name: "Alerts", href: "/alerts", icon: Bell, notificationCount: activeAlerts },
+    { name: "Profile", href: "/profile", icon: User },
   ];
-  
+
   return (
     <div className="absolute bottom-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-sm border-t border-border/50 flex justify-around items-center">
       {navItems.map((item) => {
@@ -34,7 +58,7 @@ export function BottomNav() {
             <Link href={item.href}>
               <div className="relative">
                 <item.icon className="w-6 h-6" />
-                {item.notificationCount > 0 && (
+                {item.notificationCount && item.notificationCount > 0 && (
                   <Badge
                     variant="destructive"
                     className="absolute -top-1 -right-2 h-4 w-4 justify-center p-0 text-[10px]"
