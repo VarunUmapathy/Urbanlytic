@@ -74,39 +74,71 @@ function mapEventTypeToIncidentType(eventType: string): IncidentType {
 // --- DATA FETCHING FUNCTIONS ---
 
 export async function getIncidents(): Promise<Incident[]> {
-  const eventsCol = collection(db, 'events');
+  const eventsCol = collection(db, "events");
   const eventSnapshot = await getDocs(eventsCol);
-  const incidents = eventSnapshot.docs.map(doc => {
-    const data = doc.data();
-    
-    const timestamp = data.firestoreCreatedAt instanceof Timestamp 
-      ? data.firestoreCreatedAt.toDate().toISOString() 
-      : new Date().toISOString();
-    
-    let location = { lat: 13.0827, lng: 80.2707 }; // Default location
-    
-    if (data.location && typeof data.location.latitude === 'number' && typeof data.location.longitude === 'number') {
-        location = { lat: data.location.latitude, lng: data.location.longitude };
-    }
 
-    const eventType = data.eventType || 'unknown';
-    const type = mapEventTypeToIncidentType(eventType);
-    
-    const status = (data.status?.toLowerCase() === 'resolved') ? 'resolved' : 'active';
-    const severity = (data.severity?.toLowerCase() || 'medium') as "low" | "medium" | "high";
+  const incidents = await Promise.all(
+    eventSnapshot.docs.map(async (docSnap) => {
+      const data = docSnap.data();
 
-    return {
-      id: doc.id,
-      type: type,
-      status: status,
-      severity: severity,
-      location: location,
-      title: data.summary || "Incident Report",
-      description: data.aiGeneratedSummary || data.description || 'No description provided.',
-      timestamp: timestamp,
-      imageUrl: data.imageUrl,
-    } as Incident;
-  });
+      const timestamp =
+        data.firestoreCreatedAt instanceof Timestamp
+          ? data.firestoreCreatedAt.toDate().toISOString()
+          : new Date().toISOString();
+
+      let location = { lat: 13.0827, lng: 80.2707 };
+      if (
+        data.location &&
+        typeof data.location.latitude === "number" &&
+        typeof data.location.longitude === "number"
+      ) {
+        location = {
+          lat: data.location.latitude,
+          lng: data.location.longitude,
+        };
+      }
+
+      const eventType = data.eventType || "unknown";
+      const type = mapEventTypeToIncidentType(eventType);
+
+      const status =
+        data.status?.toLowerCase() === "resolved" ? "resolved" : "active";
+      const severity = (data.severity?.toLowerCase() || "medium") as
+        | "low"
+        | "medium"
+        | "high";
+
+      // --- handle image field ---
+      let imageUrl: string | undefined = data.imageUrl;
+      if (!imageUrl && data.mediaUrls?.length) {
+        imageUrl = data.mediaUrls[0];
+      }
+      // If only a storage path is stored, resolve it
+      if (imageUrl && !imageUrl.startsWith("http")) {
+        try {
+          imageUrl = await getDownloadURL(ref(storage, imageUrl));
+        } catch (e) {
+          console.warn("Failed to resolve image URL:", e);
+        }
+      }
+
+      return {
+        id: docSnap.id,
+        type,
+        status,
+        severity,
+        location,
+        title: data.summary || "Incident Report",
+        description:
+          data.aiGeneratedSummary ||
+          data.description ||
+          "No description provided.",
+        timestamp,
+        imageUrl,
+      } as Incident;
+    })
+  );
+
   return incidents;
 }
 
