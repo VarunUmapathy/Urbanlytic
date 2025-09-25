@@ -14,15 +14,9 @@ const firebaseConfig = {
   measurementId: "G-MYL5XLGRQL"
 };
 
-// Initialize Firebase for SSR
-let app: FirebaseApp;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
-}
-
+// Initialize Firebase
+const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db: Firestore = getFirestore(app);
 const storage: FirebaseStorage = getStorage(app);
 
-export { db, storage };
+export { app, db, storage };
