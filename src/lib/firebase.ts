@@ -14,9 +14,17 @@ const firebaseConfig = {
   measurementId: "G-MYL5XLGRQL"
 };
 
-// Initialize Firebase
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db: Firestore = getFirestore(app);
-const storage: FirebaseStorage = getStorage(app);
+let app: FirebaseApp;
+let db: Firestore;
+let storage: FirebaseStorage;
+
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
+}
+
+db = getFirestore(app);
+storage = getStorage(app);
 
 export { app, db, storage };
