@@ -87,7 +87,7 @@ export function ReportIncidentDialog({
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout: 5000,
+          timeout: 10000,
           enableHighAccuracy: true,
         });
       });
@@ -106,13 +106,18 @@ export function ReportIncidentDialog({
         mediaUrls: mediaUrl ? [mediaUrl] : [],
       };
 
-      await submitUserReport(reportData);
+      const { success, error } = await submitUserReport(reportData);
+
+      if (success) {
+        toast({
+          title: "Report Submitted",
+          description: "Thank you for helping improve your city!",
+        });
+        handleClose(false);
+      } else {
+        throw error || new Error("An unknown error occurred during submission.");
+      }
       
-      toast({
-        title: "Report Submitted",
-        description: "Thank you for helping improve your city!",
-      });
-      handleClose(false);
     } catch (error: any) {
       console.error("Submission failed", error);
        if (error.code === error.PERMISSION_DENIED) {
@@ -121,7 +126,7 @@ export function ReportIncidentDialog({
           title: "Location Access Denied",
           description: "Please enable location permissions to submit a report.",
         });
-       } else if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
+       } else if (error.message.includes('Failed to fetch') || error.message.includes('network') || error.message.includes('CORS')) {
         toast({
           variant: "destructive",
           title: "Network Error",

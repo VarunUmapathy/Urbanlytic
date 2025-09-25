@@ -132,53 +132,57 @@ export type UserReport = {
     mediaUrls: string[];
 };
 
-export async function submitUserReport(report: UserReport) {
-    const reportsCol = collection(db, 'UserReports');
-    const cloudRunUrl = process.env.NEXT_PUBLIC_CLOUD_RUN_URL;
-    const timestamp = Timestamp.now();
+export async function submitUserReport(report: UserReport): Promise<{ success: boolean, error?: Error }> {
+    try {
+        const reportsCol = collection(db, 'UserReports');
+        const cloudRunUrl = process.env.NEXT_PUBLIC_CLOUD_RUN_URL;
+        const timestamp = Timestamp.now();
 
-    // 1. Submit to Firestore
-    await addDoc(reportsCol, {
-        ...report,
-        timestamp: timestamp,
-        eventType: report.type // Make sure eventType is consistent
-    });
+        // 1. Submit to Firestore
+        await addDoc(reportsCol, {
+            ...report,
+            timestamp: timestamp,
+            eventType: report.type 
+        });
 
-    // 2. Submit to Google Cloud Run
-    if (cloudRunUrl) {
-        try {
-            // Convert GeoPoint to a plain object for JSON serialization
-            const payload = {
-                description: report.description,
-                location: {
-                    latitude: report.location.latitude,
-                    longitude: report.location.longitude,
-                },
-                reportedBy: 'anonymous',
-                eventType: report.type
-            };
-            
-            const submissionUrl = `${cloudRunUrl.replace(/\/$/, '')}/ingest`;
+        // 2. Submit to Google Cloud Run (optional)
+        if (cloudRunUrl) {
+            try {
+                const payload = {
+                    description: report.description,
+                    location: {
+                        latitude: report.location.latitude,
+                        longitude: report.location.longitude,
+                    },
+                    reportedBy: 'anonymous',
+                    eventType: report.type
+                };
+                
+                const submissionUrl = `${cloudRunUrl.replace(/\/$/, '')}/ingest`;
 
-            const response = await fetch(submissionUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
+                const response = await fetch(submissionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Cloud Run service responded with status ${response.status}: ${errorText}`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    // Log this error but do not throw, as it's a secondary operation
+                    console.error(`Cloud Run service responded with status ${response.status}: ${errorText}`);
+                } else {
+                    console.log('Successfully sent report to Cloud Run service.');
+                }
+            } catch (error) {
+                // Log this error but do not throw
+                console.error('Failed to send report to Cloud Run service:', error);
             }
-
-            console.log('Successfully sent report to Cloud Run service.');
-        } catch (error) {
-            console.error('Failed to send report to Cloud Run service:', error);
-            // We will log this error but not re-throw it.
-            // This prevents the UI from getting stuck if the Cloud Run
-            // call fails, as the primary goal (saving to Firestore) has already succeeded.
         }
+        return { success: true };
+    } catch (error) {
+        console.error("Error in submitUserReport:", error);
+        return { success: false, error: error as Error };
     }
 }
