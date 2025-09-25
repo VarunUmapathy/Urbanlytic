@@ -84,7 +84,8 @@ export function MapView({
       },
       () => {
         // We can keep the default center (Chennai) if user denies location
-      }
+      },
+      { enableHighAccuracy: true }
     );
   }, [toast]);
 
