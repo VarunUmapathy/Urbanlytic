@@ -1,14 +1,26 @@
+
 // src/lib/firebaseService.ts
 
 import { db, storage } from '@/lib/firebase';
 import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit, doc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
-import type { Incident } from '@/lib/types';
 
 // --- TYPE DEFINITIONS ---
 
 export type IncidentType = "traffic" | "safety" | "infrastructure" | "road_hazard" | "accident" | "pothole" | "public_disturbance";
+
+export interface Incident {
+  id: string;
+  type: IncidentType;
+  status: 'active' | 'resolved';
+  severity: 'low' | 'medium' | 'high';
+  location: { lat: number; lng: number };
+  title: string;
+  description: string;
+  timestamp: string; // ISO string format
+  imageUrl?: string;
+}
 
 export interface UserReport {
   type: IncidentType;
@@ -37,7 +49,7 @@ function mapEventTypeToIncidentType(eventType: string): IncidentType {
     if (lowerEventType.includes('safety') || lowerEventType.includes('public_disturbance')) {
         return 'safety';
     }
-    if (lowerEventType.includes('pothole') || lowerEventType.includes('road_hazard')) {
+    if (lowerEventType.includes('road_hazard') || lowerEventType.includes('pothole')) {
         return 'road_hazard';
     }
     
@@ -72,6 +84,7 @@ export async function getIncidents(): Promise<Incident[]> {
       : new Date().toISOString();
     
     let location = { lat: 13.0827, lng: 80.2707 }; // Default location
+    
     if (data.location && typeof data.location.latitude === 'number' && typeof data.location.longitude === 'number') {
         location = { lat: data.location.latitude, lng: data.location.longitude };
     }
@@ -82,8 +95,6 @@ export async function getIncidents(): Promise<Incident[]> {
     const status = (data.status?.toLowerCase() === 'resolved') ? 'resolved' : 'active';
     const severity = (data.severity?.toLowerCase() || 'medium') as "low" | "medium" | "high";
 
-    const mediaUrls = data.mediaUrls || [];
-
     return {
       id: doc.id,
       type: type,
@@ -93,7 +104,7 @@ export async function getIncidents(): Promise<Incident[]> {
       title: data.summary || "Incident Report",
       description: data.aiGeneratedSummary || data.description || 'No description provided.',
       timestamp: timestamp,
-      imageUrl: mediaUrls.length > 0 ? mediaUrls[0] : undefined,
+      imageUrl: data.imageUrl,
     } as Incident;
   });
   return incidents;
@@ -121,7 +132,6 @@ export async function getUserReports(): Promise<Incident[]> {
     }
     
     const type = mapEventTypeToIncidentType(data.type || 'unknown');
-    const mediaUrls = data.mediaUrls || [];
 
     return {
       id: doc.id,
@@ -132,7 +142,6 @@ export async function getUserReports(): Promise<Incident[]> {
       title: data.type || "User Report",
       description: data.description || 'No description provided.',
       timestamp: timestamp,
-      imageUrl: mediaUrls.length > 0 ? mediaUrls[0] : undefined,
     } as Incident;
   });
 }

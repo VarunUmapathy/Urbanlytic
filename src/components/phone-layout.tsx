@@ -12,7 +12,7 @@ export function PhoneLayout({
   return (
     <div className="bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-[420px] h-[850px] bg-background rounded-[40px] shadow-2xl border-8 border-neutral-900 overflow-hidden relative flex flex-col">
-        <div className="relative flex-grow">
+        <div className="relative flex-grow overflow-y-auto">
           {children}
         </div>
         {showBottomNav && <BottomNav />}
