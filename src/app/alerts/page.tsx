@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { PhoneLayout } from "@/components/phone-layout";
 import { getIncidents } from "@/services/incidents";
 import type { Incident, IncidentType } from "@/lib/types";
@@ -12,12 +13,18 @@ import {
   Clock,
   CircleAlert,
   CheckCircle,
+  ImageOff,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/header";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 const incidentTypeConfig: Record<
   IncidentType,
@@ -56,46 +63,69 @@ function AlertCard({ incident }: { incident: Incident }) {
   const config = incidentTypeConfig[incident.type];
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader
-        className={cn(
-          "p-3 flex-row items-center gap-3 space-y-0",
-           incident.status === 'active' ? 'bg-destructive/10 border-b border-destructive/20' : 'bg-secondary/50 border-b'
-        )}
-      >
-        <config.icon className={cn("w-6 h-6", config.color)} />
-        <div>
-          <p className="text-xs text-muted-foreground">{config.label}</p>
-          <CardTitle className="text-base font-bold font-headline leading-tight">
-            {incident.title}
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="p-3 text-sm">
-        <p className="text-muted-foreground mb-3 leading-relaxed">
-          {incident.description}
-        </p>
-        <div className="flex justify-between text-xs text-muted-foreground items-center">
-          <div className="flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5" />
-            {formatDistanceToNow(new Date(incident.timestamp), {
-              addSuffix: true,
-            })}
-          </div>
-          <Badge
-            variant={incident.status === "active" ? "destructive" : "secondary"}
-            className="gap-1.5"
-          >
-            {incident.status === "active" ? (
-              <CircleAlert className="h-3 w-3" />
-            ) : (
-              <CheckCircle className="h-3 w-3" />
+    <Collapsible>
+      <Card className="overflow-hidden">
+        <CollapsibleTrigger className="w-full text-left">
+          <CardHeader
+            className={cn(
+              "p-3 flex-row items-center gap-3 space-y-0",
+              incident.status === 'active' ? 'bg-destructive/10 border-b border-destructive/20' : 'bg-secondary/50 border-b'
             )}
-            {incident.status.charAt(0).toUpperCase() + incident.status.slice(1)}
-          </Badge>
-        </div>
-      </CardContent>
-    </Card>
+          >
+            <config.icon className={cn("w-6 h-6", config.color)} />
+            <div>
+              <p className="text-xs text-muted-foreground">{config.label}</p>
+              <CardTitle className="text-base font-bold font-headline leading-tight">
+                {incident.title}
+              </CardTitle>
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CardContent className="p-3 text-sm">
+          <p className="text-muted-foreground mb-3 leading-relaxed">
+            {incident.description}
+          </p>
+          <div className="flex justify-between text-xs text-muted-foreground items-center">
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              {formatDistanceToNow(new Date(incident.timestamp), {
+                addSuffix: true,
+              })}
+            </div>
+            <Badge
+              variant={incident.status === "active" ? "destructive" : "secondary"}
+              className="gap-1.5"
+            >
+              {incident.status === "active" ? (
+                <CircleAlert className="h-3 w-3" />
+              ) : (
+                <CheckCircle className="h-3 w-3" />
+              )}
+              {incident.status.charAt(0).toUpperCase() + incident.status.slice(1)}
+            </Badge>
+          </div>
+        </CardContent>
+        <CollapsibleContent>
+          <div className="border-t">
+            {incident.imageUrl ? (
+              <div className="relative aspect-video w-full">
+                <Image
+                  src={incident.imageUrl}
+                  alt={incident.title}
+                  layout="fill"
+                  objectFit="cover"
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-32 bg-muted/50 text-muted-foreground text-sm">
+                <ImageOff className="w-6 h-6 mb-2" />
+                <p>No image available for this incident.</p>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
 

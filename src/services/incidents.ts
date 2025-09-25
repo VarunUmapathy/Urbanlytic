@@ -1,32 +1,14 @@
-
-
-
-
-
-
-
-
 // src/lib/firebaseService.ts
 
 import { db, storage } from '@/lib/firebase';
 import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit, doc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
+import type { Incident } from '@/lib/types';
 
 // --- TYPE DEFINITIONS ---
 
 export type IncidentType = "traffic" | "safety" | "infrastructure" | "road_hazard" | "accident" | "pothole" | "public_disturbance";
-
-export interface Incident {
-  id: string;
-  type: IncidentType;
-  status: 'active' | 'resolved';
-  severity: 'low' | 'medium' | 'high';
-  location: { lat: number; lng: number };
-  title: string;
-  description: string;
-  timestamp: string; // ISO string format
-}
 
 export interface UserReport {
   type: IncidentType;
@@ -100,6 +82,8 @@ export async function getIncidents(): Promise<Incident[]> {
     const status = (data.status?.toLowerCase() === 'resolved') ? 'resolved' : 'active';
     const severity = (data.severity?.toLowerCase() || 'medium') as "low" | "medium" | "high";
 
+    const mediaUrls = data.mediaUrls || [];
+
     return {
       id: doc.id,
       type: type,
@@ -109,6 +93,7 @@ export async function getIncidents(): Promise<Incident[]> {
       title: data.summary || "Incident Report",
       description: data.aiGeneratedSummary || data.description || 'No description provided.',
       timestamp: timestamp,
+      imageUrl: mediaUrls.length > 0 ? mediaUrls[0] : undefined,
     } as Incident;
   });
   return incidents;
@@ -136,6 +121,7 @@ export async function getUserReports(): Promise<Incident[]> {
     }
     
     const type = mapEventTypeToIncidentType(data.type || 'unknown');
+    const mediaUrls = data.mediaUrls || [];
 
     return {
       id: doc.id,
@@ -146,6 +132,7 @@ export async function getUserReports(): Promise<Incident[]> {
       title: data.type || "User Report",
       description: data.description || 'No description provided.',
       timestamp: timestamp,
+      imageUrl: mediaUrls.length > 0 ? mediaUrls[0] : undefined,
     } as Incident;
   });
 }
