@@ -1,3 +1,4 @@
+
 // src/lib/firebaseService.ts
 
 import { db } from '@/lib/firebase';
@@ -135,7 +136,7 @@ export async function getUserReports(): Promise<Incident[]> {
 // --- CORE SUBMISSION LOGIC ---
 
 /**
- * Submits the user report to Firestore and a Google Cloud service endpoint.
+ * Submits the user report to Firestore.
  * @param report The report object containing metadata.
  * @returns A promise that resolves with the success status.
  */
@@ -147,7 +148,7 @@ export async function submitUserReport(report: UserReport): Promise<{ success: b
         const user = auth.currentUser;
 
         // 1. Submit to Firestore
-        const firestorePromise = addDoc(reportsCol, {
+        await addDoc(reportsCol, {
             ...report,
             userId: user?.uid || null,
             userEmail: user?.email || null,
@@ -155,36 +156,8 @@ export async function submitUserReport(report: UserReport): Promise<{ success: b
             eventType: report.type 
         });
 
-        // 2. Submit to Google Cloud Service Endpoint
-        const cloudServiceEndpoint = 'https://data-ingestor-883976203495.asia-south1.run.app';
-        
-        const payload = {
-            ...report,
-            userId: user?.uid || null,
-            userEmail: user?.email || null,
-            timestamp: timestamp.toDate().toISOString(),
-            location: {
-                latitude: report.location.latitude,
-                longitude: report.location.longitude,
-            },
-            eventType: report.type,
-        };
-
-        const cloudServicePromise = fetch(cloudServiceEndpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-        }).then(response => {
-            if (!response.ok) {
-                throw new Error(`Cloud service submission failed with status: ${response.status}`);
-            }
-            return response.json();
-        });
-
-        // Await both promises to complete
-        await Promise.all([firestorePromise, cloudServicePromise]);
+        // The call to the external service has been temporarily removed.
+        // Once you have the correct endpoint, you can re-add the fetch call here.
 
         return { success: true };
 
