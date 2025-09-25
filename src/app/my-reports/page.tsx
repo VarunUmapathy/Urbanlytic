@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { PhoneLayout } from "@/components/phone-layout";
-import { UrbanPulseLogo } from "@/components/icons";
 import { getUserReports } from "@/services/incidents";
 import type { Incident, IncidentType } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Header } from "@/components/header";
 
 const incidentTypeConfig: Record<
   IncidentType,
@@ -120,16 +120,9 @@ export default function MyReportsPage() {
 
   return (
     <PhoneLayout>
-      <header className="sticky top-0 z-20 p-4 bg-background/90 backdrop-blur-sm border-b">
-        <div className="flex items-center gap-2">
-          <UrbanPulseLogo className="w-8 h-8 text-primary" />
-          <h1 className="text-xl font-bold font-headline text-foreground">
-            My Reports
-          </h1>
-        </div>
-      </header>
+      <Header title="My Reports" />
 
-      <main className="flex-grow p-4 overflow-y-auto">
+      <main className="flex-grow pt-16 p-4 overflow-y-auto">
         <div className="space-y-4">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (

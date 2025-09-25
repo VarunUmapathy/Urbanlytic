@@ -8,7 +8,7 @@ import { PhoneLayout } from "@/components/phone-layout";
 import { UrbanPulseLogo } from "@/components/icons";
 import { MapView } from "@/components/map-view";
 import { getIncidents } from "@/services/incidents";
-import type { Incident, IncidentStatus, IncidentType } from "@/lib/types";
+import type { Incident } from "@/lib/types";
 import { IncidentSheet } from "@/components/incident-sheet";
 import { FilterPopover, type Filters } from "@/components/filter-popover";
 import { Button } from "@/components/ui/button";
@@ -114,11 +114,11 @@ export default function Home() {
 
   return (
     <PhoneLayout>
-      <div className="absolute top-0 left-0 right-0 z-10 p-4 pb-0 bg-gradient-to-b from-background/90 via-background/60 to-transparent pointer-events-none">
-        <div className="flex justify-between items-center pointer-events-auto">
-          <div className="flex items-center gap-2 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow">
+      <div className="absolute top-0 left-0 right-0 z-10 p-4 h-16 bg-background/80 backdrop-blur-sm border-b border-border/50">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
             <UrbanPulseLogo className="w-8 h-8 text-primary" />
-            <h1 className="text-xl font-bold font-headline text-foreground pr-2">
+            <h1 className="text-xl font-bold font-headline text-foreground">
               Urbanlytic
             </h1>
           </div>

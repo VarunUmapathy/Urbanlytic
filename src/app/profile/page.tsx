@@ -4,13 +4,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PhoneLayout } from "@/components/phone-layout";
-import { UrbanPulseLogo } from "@/components/icons";
 import { useAuth } from "@/firebase/provider";
 import {
   getAuth,
   signOut,
   updateProfile,
-  sendPasswordResetEmail,
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword
@@ -22,7 +20,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LogOut,
   ChevronRight,
-  ShieldCheck,
   User as UserIcon,
   Loader2,
   KeyRound,
@@ -40,6 +37,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Header } from "@/components/header";
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
@@ -185,16 +183,9 @@ export default function ProfilePage() {
 
   return (
     <PhoneLayout>
-      <header className="sticky top-0 z-20 p-4 bg-background/90 backdrop-blur-sm border-b">
-        <div className="flex items-center gap-2">
-          <UrbanPulseLogo className="w-8 h-8 text-primary" />
-          <h1 className="text-xl font-bold font-headline text-foreground">
-            Profile
-          </h1>
-        </div>
-      </header>
+      <Header title="Profile" />
 
-      <main className="flex-grow p-4 overflow-y-auto bg-muted/30">
+      <main className="flex-grow pt-16 overflow-y-auto bg-muted/30">
         <div className="flex flex-col items-center pt-8 pb-12">
           <Avatar className="w-24 h-24 mb-4 border-4 border-background shadow-md">
             <AvatarImage src={user.photoURL || ""} alt={user.displayName || ""} />
@@ -208,7 +199,7 @@ export default function ProfilePage() {
           <p className="text-muted-foreground">{user.email}</p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 px-4">
           <div className="bg-card rounded-lg border">
             <h3 className="text-sm font-semibold text-muted-foreground px-4 pt-4">
               Account Settings
