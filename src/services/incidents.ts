@@ -176,10 +176,9 @@ export async function submitUserReport(report: UserReport) {
             console.log('Successfully sent report to Cloud Run service.');
         } catch (error) {
             console.error('Failed to send report to Cloud Run service:', error);
-            // We can decide if we want to re-throw the error or just log it.
-            // For now, we'll just log it so the user doesn't see a failure
-            // if Firestore succeeded.
-            throw error;
+            // We will log this error but not re-throw it.
+            // This prevents the UI from getting stuck if the Cloud Run
+            // call fails, as the primary goal (saving to Firestore) has already succeeded.
         }
     }
 }
