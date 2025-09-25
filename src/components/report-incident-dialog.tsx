@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,14 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Paperclip, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { submitUserReport, type UserReport } from "@/services/incidents";
+import { submitUserReport, type UserReport, uploadReportMedia } from "@/services/incidents";
 import { GeoPoint } from "firebase/firestore";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const ReportSchema = z.object({
   type: z.enum(
@@ -47,6 +48,9 @@ export function ReportIncidentDialog({
 }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(ReportSchema),
@@ -55,9 +59,27 @@ export function ReportIncidentDialog({
     },
   });
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const removeImage = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  };
+
+
   const resetState = () => {
     form.reset();
     setIsSubmitting(false);
+    removeImage();
   };
 
   const handleClose = (isOpen: boolean) => {
@@ -71,6 +93,7 @@ export function ReportIncidentDialog({
     setIsSubmitting(true);
     try {
         let location: GeoPoint;
+        let mediaUrl = "";
 
         // Step 1: Get Location
         try {
@@ -84,12 +107,22 @@ export function ReportIncidentDialog({
             throw new Error(`Location Error: ${error.message}`);
         }
 
-        // Step 2: Submit the final report
+        // Step 2: Upload image if it exists
+        if (selectedFile) {
+            try {
+                mediaUrl = await uploadReportMedia(selectedFile);
+            } catch (error: any) {
+                 throw new Error(`Image Upload Error: ${error.message}`);
+            }
+        }
+
+
+        // Step 3: Submit the final report
         const reportData: UserReport = {
             type: values.type,
             description: values.description,
             location: location,
-            mediaUrls: [],
+            mediaUrls: mediaUrl ? [mediaUrl] : [],
         };
         
         try {
@@ -188,6 +221,26 @@ export function ReportIncidentDialog({
                   </FormItem>
                 )}
               />
+              
+              <div>
+                <FormLabel>Photo (Optional)</FormLabel>
+                {previewUrl ? (
+                    <div className="mt-2 relative w-full h-48 rounded-md overflow-hidden border">
+                         <Image src={previewUrl} alt="Preview" layout="fill" objectFit="cover" />
+                         <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={removeImage}>
+                            <X className="h-4 w-4" />
+                         </Button>
+                    </div>
+                ) : (
+                    <Button type="button" variant="outline" className="mt-2 w-full" onClick={() => fileInputRef.current?.click()} disabled={isSubmitting}>
+                        <Paperclip className="mr-2 h-4 w-4"/>
+                        Add Photo
+                    </Button>
+                )}
+                <FormControl>
+                    <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" disabled={isSubmitting}/>
+                </FormControl>
+              </div>
             </div>
             
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 pt-4">

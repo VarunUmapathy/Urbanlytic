@@ -1,9 +1,11 @@
 
 
+
 // src/lib/firebaseService.ts
 
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
 import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit, doc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 
 // --- TYPE DEFINITIONS ---
@@ -141,6 +143,28 @@ export async function getUserReports(): Promise<Incident[]> {
       timestamp: timestamp,
     } as Incident;
   });
+}
+
+
+// --- MEDIA UPLOAD ---
+
+/**
+ * Uploads a media file to Firebase Storage.
+ * @param file The file to upload.
+ * @returns A promise that resolves with the public URL of the uploaded file.
+ */
+export async function uploadReportMedia(file: File): Promise<string> {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated.");
+
+    const fileId = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+    const filePath = `user-reports/${user.uid}/${fileId}-${file.name}`;
+    const storageRef = ref(storage, filePath);
+
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
 }
 
 
