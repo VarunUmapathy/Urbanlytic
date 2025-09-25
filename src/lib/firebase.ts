@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getFirestore, type Firestore } from "firebase/firestore";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration from your new project
 const firebaseConfig = {
@@ -14,13 +14,20 @@ const firebaseConfig = {
   measurementId: "G-MYL5XLGRQL"
 };
 
+let app: FirebaseApp;
+let db: Firestore;
+let storage: FirebaseStorage;
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-console.log("Firebase connected successfully! Project ID:", firebaseConfig.projectId);
-
+try {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  db = getFirestore(app);
+  storage = getStorage(app);
+} catch (error) {
+  console.error("Firebase initialization error", error);
+  // You might want to throw the error or handle it in a way
+  // that your application can gracefully fail.
+  // For now, we'll log it and the app will likely fail
+  // when db or storage are used.
+}
 
 export { db, storage };
