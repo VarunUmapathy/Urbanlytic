@@ -1,5 +1,5 @@
 export type IncidentType = "traffic" | "safety" | "infrastructure" | "road_hazard" | "accident" | "pothole" | "public_disturbance";
-export type IncidentStatus = "active" | "resolved";
+export type IncidentStatus = "active" | "resolved" | "discarded";
 
 export type Incident = {
   id: string;
@@ -14,4 +14,5 @@ export type Incident = {
   description: string;
   timestamp: string; // ISO 8601 string format
   imageUrl?: string;
+  reason?: string;
 };

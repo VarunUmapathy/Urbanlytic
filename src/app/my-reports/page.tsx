@@ -14,6 +14,7 @@ import {
   CircleAlert,
   CheckCircle,
   Pencil,
+  ArchiveX,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/header";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const incidentTypeConfig: Record<
   IncidentType,
@@ -62,6 +64,19 @@ const incidentTypeConfig: Record<
 function ReportItem({ incident }: { incident: Incident }) {
   const config = incidentTypeConfig[incident.type] || incidentTypeConfig['infrastructure'];
 
+  const getStatusBadge = () => {
+    switch(incident.status) {
+      case 'active':
+        return <Badge variant="destructive" className="gap-1.5"><Pencil className="h-3 w-3" />In Review</Badge>;
+      case 'resolved':
+        return <Badge variant="secondary" className="gap-1.5"><CheckCircle className="h-3 w-3" />Resolved</Badge>;
+      case 'discarded':
+         return <Badge variant="outline" className="gap-1.5"><ArchiveX className="h-3 w-3" />Discarded</Badge>;
+      default:
+        return <Badge>{incident.status}</Badge>;
+    }
+  }
+
   return (
     <Card>
       <CardHeader className="p-4">
@@ -80,22 +95,18 @@ function ReportItem({ incident }: { incident: Incident }) {
               addSuffix: true,
             })}
           </div>
-          <Badge
-            variant={incident.status === "active" ? "destructive" : "secondary"}
-            className="gap-1.5"
-          >
-            {incident.status === "active" ? (
-              <Pencil className="h-3 w-3" />
-            ) : (
-              <CheckCircle className="h-3 w-3" />
-            )}
-            {incident.status.charAt(0).toUpperCase() + incident.status.slice(1)}
-          </Badge>
+          {getStatusBadge()}
         </div>
         <Separator className="my-2" />
         <p className="text-muted-foreground leading-relaxed">
           {incident.description}
         </p>
+        {incident.status === 'discarded' && incident.reason && (
+          <Alert variant="destructive" className="mt-3">
+            <AlertTitle className="font-semibold">Reason for Discard</AlertTitle>
+            <AlertDescription>{incident.reason}</AlertDescription>
+          </Alert>
+        )}
       </CardContent>
     </Card>
   );

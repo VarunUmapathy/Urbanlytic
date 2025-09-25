@@ -2,7 +2,7 @@
 // src/lib/firebaseService.ts
 
 import { db, storage } from '@/lib/firebase';
-import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit, doc } from 'firebase/firestore';
+import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit, doc, where } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 
@@ -13,13 +13,14 @@ export type IncidentType = "traffic" | "safety" | "infrastructure" | "road_hazar
 export interface Incident {
   id: string;
   type: IncidentType;
-  status: 'active' | 'resolved';
+  status: 'active' | 'resolved' | 'discarded';
   severity: 'low' | 'medium' | 'high';
   location: { lat: number; lng: number };
   title: string;
   description: string;
   timestamp: string; // ISO string format
   imageUrl?: string;
+  reason?: string;
 }
 
 export interface UserReport {
@@ -87,12 +88,8 @@ export async function getIncidents(): Promise<Incident[]> {
           : new Date().toISOString();
 
       let location = { lat: 13.0827, lng: 80.2707 };
-      if (
-        data.location &&
-        typeof data.location.latitude === "number" &&
-        typeof data.location.longitude === "number"
-      ) {
-        location = {
+      if (data.location?.latitude && data.location?.longitude) {
+         location = {
           lat: data.location.latitude,
           lng: data.location.longitude,
         };
@@ -148,7 +145,7 @@ export async function getUserReports(): Promise<Incident[]> {
   if (!user) return [];
 
   const reportsCol = collection(db, 'UserReports');
-  const q = query(reportsCol, orderBy('timestamp', 'desc'), limit(10));
+  const q = query(reportsCol, where("userId", "==", user.uid), orderBy('timestamp', 'desc'), limit(20));
   const reportSnapshot = await getDocs(q);
 
   return reportSnapshot.docs.map(doc => {
@@ -165,15 +162,18 @@ export async function getUserReports(): Promise<Incident[]> {
     
     const type = mapEventTypeToIncidentType(data.type || 'unknown');
 
+    const status = (data.status?.toLowerCase() || 'active') as 'active' | 'resolved' | 'discarded';
+
     return {
       id: doc.id,
       type: type,
-      status: data.status || 'active',
-      severity: 'medium',
+      status: status,
+      severity: 'medium', // Not available in UserReports, so we set a default
       location: location,
-      title: data.type || "User Report",
+      title: data.type.charAt(0).toUpperCase() + data.type.slice(1) || "User Report",
       description: data.description || 'No description provided.',
       timestamp: timestamp,
+      reason: data.reason || undefined,
     } as Incident;
   });
 }
