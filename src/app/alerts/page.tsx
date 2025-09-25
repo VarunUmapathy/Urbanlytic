@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -156,8 +157,8 @@ export default function AlertsPage() {
     <PhoneLayout>
       <Header title="Nearby Alerts" />
 
-      <main className="flex-grow pt-16 p-4 overflow-y-auto bg-muted/30">
-        <div className="space-y-4">
+      <main className="flex-grow pt-16 overflow-y-auto bg-muted/30">
+        <div className="space-y-4 p-4">
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-40 w-full rounded-lg" />

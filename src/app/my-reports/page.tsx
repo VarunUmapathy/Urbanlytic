@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -122,8 +123,8 @@ export default function MyReportsPage() {
     <PhoneLayout>
       <Header title="My Reports" />
 
-      <main className="flex-grow pt-16 p-4 overflow-y-auto">
-        <div className="space-y-4">
+      <main className="flex-grow pt-16 overflow-y-auto">
+        <div className="space-y-4 p-4">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-36 w-full rounded-lg" />
