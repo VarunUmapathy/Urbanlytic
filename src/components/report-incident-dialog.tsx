@@ -84,21 +84,33 @@ export function ReportIncidentDialog({
   
   const onSubmit = async (values: ReportFormValues) => {
     setIsSubmitting(true);
-    try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout: 10000,
-          enableHighAccuracy: true,
-        });
-      });
+    let location: GeoPoint;
+    let mediaUrl = "";
 
-      const location = new GeoPoint(position.coords.latitude, position.coords.longitude);
-      
-      let mediaUrl = "";
-      if (values.media) {
-        mediaUrl = await uploadFile(values.media);
+    try {
+      // Step 1: Get Location
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            timeout: 10000,
+            enableHighAccuracy: true,
+          });
+        });
+        location = new GeoPoint(position.coords.latitude, position.coords.longitude);
+      } catch (error: any) {
+        throw new Error(`Location Error: ${error.message}`);
       }
 
+      // Step 2: Upload Media if it exists
+      if (values.media) {
+        try {
+          mediaUrl = await uploadFile(values.media);
+        } catch (error: any) {
+          throw new Error(`File Upload Error: ${error.message}`);
+        }
+      }
+
+      // Step 3: Submit the final report
       const reportData: UserReport = {
         type: values.type,
         description: values.description,
@@ -106,40 +118,29 @@ export function ReportIncidentDialog({
         mediaUrls: mediaUrl ? [mediaUrl] : [],
       };
 
-      const { success, error } = await submitUserReport(reportData);
-
-      if (success) {
-        toast({
-          title: "Report Submitted",
-          description: "Thank you for helping improve your city!",
-        });
-        handleClose(false);
-      } else {
-        throw error || new Error("An unknown error occurred during submission.");
+      try {
+        const { success, error } = await submitUserReport(reportData);
+        if (!success) {
+          throw error || new Error("An unknown error occurred during submission.");
+        }
+      } catch (error: any) {
+        throw new Error(`Submission Error: ${error.message}`);
       }
       
+      toast({
+        title: "Report Submitted",
+        description: "Thank you for helping improve your city!",
+      });
+      handleClose(false);
+
     } catch (error: any) {
       console.error("Submission failed", error);
-       if (error.code === error.PERMISSION_DENIED) {
-         toast({
-          variant: "destructive",
-          title: "Location Access Denied",
-          description: "Please enable location permissions to submit a report.",
-        });
-       } else if (error.message.includes('Failed to fetch') || error.message.includes('network') || error.message.includes('CORS')) {
-        toast({
-          variant: "destructive",
-          title: "Network Error",
-          description: "Could not reach the server. This might be a CORS issue or a network problem. Please check the console for more details.",
-          duration: 9000,
-        });
-       } else {
-         toast({
-          variant: "destructive",
-          title: "Submission Failed",
-          description: error.message || "Could not submit your report. Please try again.",
-        });
-       }
+      toast({
+        variant: "destructive",
+        title: "Submission Failed",
+        description: error.message || "Could not submit your report. Please try again.",
+        duration: 9000,
+      });
     } finally {
       setIsSubmitting(false);
     }
