@@ -129,7 +129,7 @@ export async function getUserReports(): Promise<Incident[]> {
     return {
       id: doc.id,
       type: type,
-      status: 'active',
+      status: data.status || 'active', // Use status from DB, fallback to 'active'
       severity: 'medium',
       location: location,
       title: data.type || "User Report",
@@ -159,7 +159,8 @@ export async function submitUserReport(report: UserReport): Promise<{ success: b
             userId: user?.uid || null,
             userEmail: user?.email || null,
             timestamp: timestamp,
-            eventType: report.type 
+            eventType: report.type,
+            status: 'active' // Add status field for Firestore
         });
 
         // 2. Prepare data for Cloud Service
