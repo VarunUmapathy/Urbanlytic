@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -10,7 +10,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -19,15 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { submitUserReport, uploadFile, type UserReport } from "@/services/incidents";
+import { submitUserReport, type UserReport } from "@/services/incidents";
 import { GeoPoint } from "firebase/firestore";
 import { cn } from "@/lib/utils";
-import { Separator } from "./ui/separator";
 
 const ReportSchema = z.object({
   type: z.enum(
@@ -35,7 +33,6 @@ const ReportSchema = z.object({
     { required_error: "Please select a category." }
   ),
   description: z.string().min(10, "Description must be at least 10 characters."),
-  media: z.instanceof(File).optional(),
 });
 
 type ReportFormValues = z.infer<typeof ReportSchema>;
@@ -49,9 +46,6 @@ export function ReportIncidentDialog({
 }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [testFile, setTestFile] = useState<File | null>(null);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(ReportSchema),
@@ -63,11 +57,6 @@ export function ReportIncidentDialog({
   const resetState = () => {
     form.reset();
     setIsSubmitting(false);
-    setSelectedFileName(null);
-    setTestFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
   const handleClose = (isOpen: boolean) => {
@@ -76,20 +65,11 @@ export function ReportIncidentDialog({
     }
     onOpenChange(isOpen);
   };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-      form.setValue("media", file);
-      setSelectedFileName(file.name);
-    }
-  };
   
   const onSubmit = async (values: ReportFormValues) => {
     setIsSubmitting(true);
     try {
         let location: GeoPoint;
-        let mediaUrl = "";
 
         // Step 1: Get Location
         try {
@@ -104,21 +84,12 @@ export function ReportIncidentDialog({
             throw new Error(`Location Error: ${error.message}`);
         }
 
-        // Step 2: Upload Media if it exists
-        if (values.media) {
-            try {
-                mediaUrl = await uploadFile(values.media);
-            } catch (error: any) {
-                throw new Error(`File Upload Error: ${error.message}`);
-            }
-        }
-
-        // Step 3: Submit the final report
+        // Step 2: Submit the final report
         const reportData: UserReport = {
             type: values.type,
             description: values.description,
             location: location,
-            mediaUrls: mediaUrl ? [mediaUrl] : [],
+            mediaUrls: [],
         };
         
         try {
@@ -149,40 +120,6 @@ export function ReportIncidentDialog({
     }
   };
 
-  const handleTestUpload = async () => {
-    if (!testFile) {
-      toast({
-        variant: "destructive",
-        title: "No File Selected",
-        description: "Please choose a file to test the upload.",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Testing Upload...",
-      description: `Uploading ${testFile.name}...`,
-    });
-
-    try {
-      const downloadUrl = await uploadFile(testFile);
-      toast({
-        title: "Upload Successful!",
-        description: `File is available at: ${downloadUrl.substring(0, 50)}...`,
-        duration: 9000,
-      });
-    } catch (error: any) {
-      console.error("Test upload failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Upload Failed",
-        description: error.message || "Could not upload the file. Check console and security rules.",
-        duration: 9000,
-      });
-    }
-  };
-
-
   if (!open) return null;
 
   return (
@@ -207,28 +144,6 @@ export function ReportIncidentDialog({
             </div>
             
             <div className="grid gap-4 px-6">
-              <div className="grid w-full items-center gap-1.5">
-                <FormLabel>Media (Photo/Video)</FormLabel>
-                <Button asChild variant="outline" className="w-full">
-                  <label
-                    htmlFor="media-upload"
-                    className="cursor-pointer flex items-center gap-2"
-                  >
-                    <Upload className="h-4 w-4" />
-                    {selectedFileName || "Upload Media"}
-                  </label>
-                </Button>
-                <Input
-                  id="media-upload"
-                  type="file"
-                  className="sr-only"
-                  onChange={handleFileChange}
-                  accept="image/*"
-                  ref={fileInputRef}
-                  disabled={isSubmitting}
-                />
-              </div>
-
               <FormField
                 control={form.control}
                 name="type"
@@ -277,27 +192,13 @@ export function ReportIncidentDialog({
             
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 pt-4">
               <Button type="button" variant="ghost" onClick={() => handleClose(false)} disabled={isSubmitting}>Cancel</Button>
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Submit Report
               </Button>
             </div>
           </form>
         </Form>
-        <Separator />
-        <div className="p-6 bg-muted/50 rounded-b-xl">
-          <h4 className="text-sm font-medium text-muted-foreground mb-2">Storage Upload Test</h4>
-          <div className="flex gap-2">
-            <Input 
-              id="test-file"
-              type="file" 
-              accept="image/*"
-              onChange={(e) => e.target.files && setTestFile(e.target.files[0])}
-              className="flex-grow"
-            />
-            <Button onClick={handleTestUpload}>Test Upload</Button>
-          </div>
-        </div>
       </div>
     </div>
   );

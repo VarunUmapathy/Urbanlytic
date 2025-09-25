@@ -1,8 +1,7 @@
 // src/lib/firebaseService.ts
 
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit } from 'firebase/firestore';
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 // --- TYPE DEFINITIONS ---
 
@@ -24,7 +23,7 @@ export interface UserReport {
   type: IncidentType;
   description: string;
   location: GeoPoint;
-  mediaUrls: string[];
+  mediaUrls?: string[];
 }
 
 // --- UTILITY FUNCTIONS ---
@@ -134,23 +133,8 @@ export async function getUserReports(): Promise<Incident[]> {
 // --- CORE SUBMISSION LOGIC ---
 
 /**
- * Uploads a single file to Firebase Storage.
- * @param file The file object to upload.
- * @returns A promise that resolves with the public download URL of the uploaded file.
- */
-export const uploadFile = async (file: File): Promise<string> => {
-  if (!file) {
-    throw new Error("No file provided for upload.");
-  }
-  const storageRef = ref(storage, `reports/${Date.now()}-${file.name}`);
-  await uploadBytes(storageRef, file);
-  const downloadUrl = await getDownloadURL(storageRef);
-  return downloadUrl;
-};
-
-/**
  * Submits the user report metadata to the 'UserReports' collection in Firestore.
- * @param report The report object containing metadata and media URLs.
+ * @param report The report object containing metadata.
  * @returns A promise that resolves with the success status.
  */
 export async function submitUserReport(report: UserReport): Promise<{ success: boolean, error?: Error }> {
@@ -160,6 +144,7 @@ export async function submitUserReport(report: UserReport): Promise<{ success: b
 
         await addDoc(reportsCol, {
             ...report,
+            mediaUrls: [], // Always submit with an empty array
             timestamp: timestamp,
             eventType: report.type 
         });
