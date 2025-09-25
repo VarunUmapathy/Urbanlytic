@@ -2,7 +2,7 @@
 // src/lib/firebaseService.ts
 
 import { db, storage } from '@/lib/firebase';
-import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit, doc, where } from 'firebase/firestore';
+import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, where } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 
