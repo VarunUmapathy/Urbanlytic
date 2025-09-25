@@ -1,4 +1,5 @@
 
+
 // src/lib/firebaseService.ts
 
 import { db } from '@/lib/firebase';
@@ -24,7 +25,14 @@ export interface UserReport {
   type: IncidentType;
   description: string;
   location: GeoPoint;
+  mediaUrls: string[];
 }
+
+// --- CONFIGURATION ---
+
+// TODO: Replace with the correct full endpoint URL, including the path (e.g., /submit).
+const CLOUD_SERVICE_ENDPOINT = "https://data-ingestor-883976203495.asia-south1.run.app/submit";
+
 
 // --- UTILITY FUNCTIONS ---
 
@@ -136,19 +144,18 @@ export async function getUserReports(): Promise<Incident[]> {
 // --- CORE SUBMISSION LOGIC ---
 
 /**
- * Submits the user report to Firestore.
+ * Submits the user report to Firestore and an external cloud service.
  * @param report The report object containing metadata.
  * @returns A promise that resolves with the success status.
  */
 export async function submitUserReport(report: UserReport): Promise<{ success: boolean, error?: Error }> {
     try {
-        const reportsCol = collection(db, 'UserReports');
-        const timestamp = Timestamp.now();
         const auth = getAuth();
         const user = auth.currentUser;
+        const timestamp = Timestamp.now();
 
-        // 1. Submit to Firestore
-        await addDoc(reportsCol, {
+        // 1. Prepare data for Firestore
+        const firestorePromise = addDoc(collection(db, 'UserReports'), {
             ...report,
             userId: user?.uid || null,
             userEmail: user?.email || null,
@@ -156,8 +163,38 @@ export async function submitUserReport(report: UserReport): Promise<{ success: b
             eventType: report.type 
         });
 
-        // The call to the external service has been temporarily removed.
-        // Once you have the correct endpoint, you can re-add the fetch call here.
+        // 2. Prepare data for Cloud Service
+        const payload = {
+            ...report,
+            userId: user?.uid || null,
+            userEmail: user?.email || null,
+            timestamp: timestamp.toDate().toISOString(),
+            location: {
+                latitude: report.location.latitude,
+                longitude: report.location.longitude,
+            },
+        };
+        
+        // --- This part is commented out to prevent 404 errors. ---
+        // --- Uncomment it after you confirm the correct CLOUD_SERVICE_ENDPOINT path. ---
+        /*
+        const cloudServicePromise = fetch(CLOUD_SERVICE_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error(`Cloud Service returned an error: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        });
+        */
+
+        // Execute only the Firestore submission for now
+        await firestorePromise;
+        
+        // When ready, use Promise.all to ensure both succeed
+        // await Promise.all([firestorePromise, cloudServicePromise]);
 
         return { success: true };
 
