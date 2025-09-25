@@ -16,14 +16,12 @@ export interface Incident {
   title: string;
   description: string;
   timestamp: string; // ISO string format
-  imageUrl?: string;
 }
 
 export interface UserReport {
   type: IncidentType;
   description: string;
   location: GeoPoint;
-  mediaUrls?: string[];
 }
 
 // --- UTILITY FUNCTIONS ---
@@ -33,32 +31,32 @@ function mapEventTypeToIncidentType(eventType: string): IncidentType {
         return 'infrastructure';
     }
     
-    const lowerEventType = eventType.toLowerCase().replace(/_/g, ' ');
+    const lowerEventType = eventType.toLowerCase();
 
+    if (lowerEventType.includes('traffic') || lowerEventType.includes('accident')) {
+        return 'traffic';
+    }
+    if (lowerEventType.includes('safety') || lowerEventType.includes('public_disturbance')) {
+        return 'safety';
+    }
+    if (lowerEventType.includes('pothole') || lowerEventType.includes('road_hazard')) {
+        return 'road_hazard';
+    }
+    
     const mapping: Record<string, IncidentType> = {
-        'traffic jam': 'traffic',
-        'accident': 'accident',
-        'suspicious activity': 'safety',
-        'public disturbance': 'public_disturbance',
-        'road hazard': 'road_hazard',
-        'pothole': 'pothole',
-        'infrastructure issue': 'infrastructure',
         'traffic': 'traffic',
+        'accident': 'accident',
         'safety': 'safety',
+        'public_disturbance': 'public_disturbance',
+        'road_hazard': 'road_hazard',
+        'pothole': 'pothole',
         'infrastructure': 'infrastructure'
     };
     
-    // Check for a direct match in the mapping
     if (mapping[lowerEventType]) {
         return mapping[lowerEventType];
     }
     
-    // Check if the lowercase type is a valid incident type itself
-    const validTypes: IncidentType[] = ["traffic", "safety", "infrastructure", "road_hazard", "accident", "pothole", "public_disturbance"];
-    if (validTypes.includes(lowerEventType as IncidentType)) {
-        return lowerEventType as IncidentType;
-    }
-
     return 'infrastructure'; // Default fallback
 }
 
@@ -95,7 +93,6 @@ export async function getIncidents(): Promise<Incident[]> {
       title: data.summary || "Incident Report",
       description: data.aiGeneratedSummary || data.description || 'No description provided.',
       timestamp: timestamp,
-      imageUrl: data.imageUrl,
     } as Incident;
   });
   return incidents;
@@ -129,7 +126,6 @@ export async function getUserReports(): Promise<Incident[]> {
       title: data.type || "User Report",
       description: data.description || 'No description provided.',
       timestamp: timestamp,
-      imageUrl: data.mediaUrls && data.mediaUrls.length > 0 ? data.mediaUrls[0] : undefined,
     } as Incident;
   });
 }
@@ -149,7 +145,6 @@ export async function submitUserReport(report: UserReport): Promise<{ success: b
 
         await addDoc(reportsCol, {
             ...report,
-            mediaUrls: [], // Always submit with an empty array
             timestamp: timestamp,
             eventType: report.type 
         });
