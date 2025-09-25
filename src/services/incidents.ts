@@ -29,6 +29,10 @@ export interface UserReport {
 // --- UTILITY FUNCTIONS ---
 
 function mapEventTypeToIncidentType(eventType: string): IncidentType {
+    if (!eventType) {
+        return 'infrastructure';
+    }
+    
     const lowerEventType = eventType.toLowerCase().replace(/_/g, ' ');
 
     const mapping: Record<string, IncidentType> = {
@@ -43,15 +47,16 @@ function mapEventTypeToIncidentType(eventType: string): IncidentType {
         'safety': 'safety',
         'infrastructure': 'infrastructure'
     };
-
-    const directMatch = (Object.keys(mapping) as Array<keyof typeof mapping>).find(key => key === lowerEventType);
-    if(directMatch) {
-        return mapping[directMatch];
+    
+    // Check for a direct match in the mapping
+    if (mapping[lowerEventType]) {
+        return mapping[lowerEventType];
     }
     
+    // Check if the lowercase type is a valid incident type itself
     const validTypes: IncidentType[] = ["traffic", "safety", "infrastructure", "road_hazard", "accident", "pothole", "public_disturbance"];
-    if (validTypes.includes(eventType as IncidentType)) {
-        return eventType as IncidentType;
+    if (validTypes.includes(lowerEventType as IncidentType)) {
+        return lowerEventType as IncidentType;
     }
 
     return 'infrastructure'; // Default fallback
