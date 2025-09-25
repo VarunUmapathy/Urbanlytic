@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -85,7 +86,7 @@ export function MapView({
       () => {
         // We can keep the default center (Chennai) if user denies location
       },
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
     );
   }, [toast]);
 

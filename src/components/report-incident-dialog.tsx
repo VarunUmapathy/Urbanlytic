@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef } from "react";
@@ -100,7 +101,8 @@ export function ReportIncidentDialog({
             const position = await new Promise<GeolocationPosition>((resolve, reject) => {
                 navigator.geolocation.getCurrentPosition(resolve, reject, {
                     enableHighAccuracy: true,
-                    timeout: 20000,
+                    timeout: 5000,
+                    maximumAge: 0
                 });
             });
             location = new GeoPoint(position.coords.latitude, position.coords.longitude);
