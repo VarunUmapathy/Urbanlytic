@@ -1,7 +1,8 @@
 
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
 import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import type { Incident, IncidentType } from '@/lib/types';
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 function mapEventTypeToIncidentType(eventType: string): IncidentType {
     const lowerEventType = eventType.toLowerCase().replace(/_/g, ' ');
@@ -115,6 +116,13 @@ export async function getUserReports(): Promise<Incident[]> {
     } as Incident;
   });
 }
+
+export const uploadFile = async (file: File) => {
+  const storageRef = ref(storage, `reports/${Date.now()}-${file.name}`);
+  await uploadBytes(storageRef, file);
+  const downloadUrl = await getDownloadURL(storageRef);
+  return downloadUrl;
+};
 
 
 export type UserReport = {

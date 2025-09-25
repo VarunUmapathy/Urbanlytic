@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { submitUserReport, type UserReport } from "@/services/incidents";
+import { submitUserReport, uploadFile, type UserReport } from "@/services/incidents";
 import { GeoPoint } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 
@@ -93,14 +93,17 @@ export function ReportIncidentDialog({
       });
 
       const location = new GeoPoint(position.coords.latitude, position.coords.longitude);
+      
+      let mediaUrl = "";
+      if (values.media) {
+        mediaUrl = await uploadFile(values.media);
+      }
 
       const reportData: UserReport = {
         type: values.type,
         description: values.description,
         location: location,
-        // In a real app, you would upload the file to cloud storage
-        // and get a URL. For now, we'll use a placeholder.
-        mediaUrls: values.media ? ["testimage"] : [],
+        mediaUrls: mediaUrl ? [mediaUrl] : [],
       };
 
       await submitUserReport(reportData);
@@ -109,7 +112,7 @@ export function ReportIncidentDialog({
         title: "Report Submitted",
         description: "Thank you for helping improve your city!",
       });
-      onOpenChange(false);
+      handleClose(false);
     } catch (error: any) {
       console.error("Submission failed", error);
        if (error.code === error.PERMISSION_DENIED) {
