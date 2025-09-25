@@ -27,6 +27,7 @@ import { z } from "zod";
 import { submitUserReport, uploadFile, type UserReport } from "@/services/incidents";
 import { GeoPoint } from "firebase/firestore";
 import { cn } from "@/lib/utils";
+import { Separator } from "./ui/separator";
 
 const ReportSchema = z.object({
   type: z.enum(
@@ -50,6 +51,7 @@ export function ReportIncidentDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [testFile, setTestFile] = useState<File | null>(null);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(ReportSchema),
@@ -62,6 +64,7 @@ export function ReportIncidentDialog({
     form.reset();
     setIsSubmitting(false);
     setSelectedFileName(null);
+    setTestFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -145,6 +148,40 @@ export function ReportIncidentDialog({
       setIsSubmitting(false);
     }
   };
+
+  const handleTestUpload = async () => {
+    if (!testFile) {
+      toast({
+        variant: "destructive",
+        title: "No File Selected",
+        description: "Please choose a file to test the upload.",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Testing Upload...",
+      description: `Uploading ${testFile.name}...`,
+    });
+
+    try {
+      const downloadUrl = await uploadFile(testFile);
+      toast({
+        title: "Upload Successful!",
+        description: `File is available at: ${downloadUrl.substring(0, 50)}...`,
+        duration: 9000,
+      });
+    } catch (error: any) {
+      console.error("Test upload failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Upload Failed",
+        description: error.message || "Could not upload the file. Check console and security rules.",
+        duration: 9000,
+      });
+    }
+  };
+
 
   if (!open) return null;
 
@@ -247,6 +284,20 @@ export function ReportIncidentDialog({
             </div>
           </form>
         </Form>
+        <Separator />
+        <div className="p-6 bg-muted/50 rounded-b-xl">
+          <h4 className="text-sm font-medium text-muted-foreground mb-2">Storage Upload Test</h4>
+          <div className="flex gap-2">
+            <Input 
+              id="test-file"
+              type="file" 
+              accept="image/*"
+              onChange={(e) => e.target.files && setTestFile(e.target.files[0])}
+              className="flex-grow"
+            />
+            <Button onClick={handleTestUpload}>Test Upload</Button>
+          </div>
+        </div>
       </div>
     </div>
   );
