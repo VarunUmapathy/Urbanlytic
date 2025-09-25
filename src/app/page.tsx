@@ -21,7 +21,6 @@ export default function Home() {
   const router = useRouter();
 
   const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [filteredIncidents, setFilteredIncidents] = useState<Incident[]>([]);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
@@ -44,7 +43,6 @@ export default function Home() {
         try {
           const fetchedIncidents = await getIncidents();
           setIncidents(fetchedIncidents);
-          setFilteredIncidents(fetchedIncidents);
         } catch (error) {
           console.error("Failed to fetch incidents:", error);
         } finally {
@@ -55,22 +53,11 @@ export default function Home() {
     fetchIncidents();
   }, [user]);
 
-  useEffect(() => {
-    let newFilteredIncidents = [...incidents];
-
-    if (filters.type.length > 0) {
-      newFilteredIncidents = newFilteredIncidents.filter((incident) =>
-        filters.type.includes(incident.type)
-      );
-    }
-    if (filters.status.length > 0) {
-      newFilteredIncidents = newFilteredIncidents.filter((incident) =>
-        filters.status.includes(incident.status)
-      );
-    }
-
-    setFilteredIncidents(newFilteredIncidents);
-  }, [filters, incidents]);
+  const filteredIncidents = incidents.filter(incident => {
+    const typeMatch = filters.type.length === 0 || filters.type.includes(incident.type);
+    const statusMatch = filters.status.length === 0 || filters.status.includes(incident.status);
+    return typeMatch && statusMatch;
+  });
 
   const handleMarkerClick = (incident: Incident) => {
     setSelectedIncident(incident);
