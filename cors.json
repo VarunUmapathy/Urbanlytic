@@ -2,7 +2,9 @@
   {
     "origin": [
       "https://9000-firebase-studio-1752665782523.cluster-6dx7corvpngoivimwvvljgokdw.cloudworkstations.dev",
+      "https://9000-firebase-studio-1752665782523.cluster-6dx7corvpngoivimwvvljgokdw.cloudworkstations.dev/",
       "https://6000-firebase-studio-1752665782523.cluster-6dx7corvpngoivimwvvljgokdw.cloudworkstations.dev",
+      "https://6000-firebase-studio-1752665782523.cluster-6dx7corvpngoivimwvvljgokdw.cloudworkstations.dev/",
       "http://localhost:3000",
       "http://localhost:3000/"
     ],
