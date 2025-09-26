@@ -68,11 +68,11 @@ function ReportItem({ incident }: { incident: Incident }) {
   const getStatusBadge = () => {
     switch(incident.status) {
       case 'active':
-        return <Badge variant="destructive" className="gap-1.5"><Pencil className="h-3 w-3" />In Review</Badge>;
+        return <Badge variant="destructive" className="gap-1.5"><Pencil className="h-3 w-3" />Active</Badge>;
       case 'resolved':
         return <Badge variant="secondary" className="gap-1.5"><CheckCircle className="h-3 w-3" />Resolved</Badge>;
       case 'discarded':
-         return <Badge variant="outline" className="gap-1.5"><ArchiveX className="h-3 w-3" />Discarded</Badge>;
+         return <Badge variant="outline" className="gap-1.5"><ArchiveX className="h-3 w-3" />Rejected</Badge>;
       default:
         return <Badge>{incident.status}</Badge>;
     }
