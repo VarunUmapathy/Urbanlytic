@@ -4,8 +4,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { PhoneLayout } from "@/components/phone-layout";
-import { getIncidents } from "@/services/incidents";
-import type { Incident, IncidentType } from "@/lib/types";
+import { getIncidents, getNewsArticles } from "@/services/incidents";
+import type { Incident, IncidentType, NewsArticle, AlertItem } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import {
   Car,
@@ -15,6 +15,7 @@ import {
   CircleAlert,
   CheckCircle,
   ImageOff,
+  Newspaper,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import Link from 'next/link';
 
 const incidentTypeConfig: Record<
   IncidentType,
@@ -130,27 +132,69 @@ function AlertCard({ incident }: { incident: Incident }) {
   );
 }
 
+function NewsCard({ article }: { article: NewsArticle }) {
+  return (
+    <a href={article.url} target="_blank" rel="noopener noreferrer">
+      <Card className="overflow-hidden hover:bg-muted/50 transition-colors">
+        <CardHeader className="p-3 flex-row items-center gap-3 space-y-0 bg-primary/10 border-b border-primary/20">
+          <Newspaper className="w-6 h-6 text-primary" />
+          <div>
+            <p className="text-xs text-primary">{article.source}</p>
+            <CardTitle className="text-base font-bold font-headline leading-tight">
+              {article.title}
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="p-3 text-sm">
+          <p className="text-muted-foreground mb-3 leading-relaxed line-clamp-3">
+            {article.description}
+          </p>
+          <div className="flex justify-between text-xs text-muted-foreground items-center">
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              {formatDistanceToNow(new Date(article.timestamp), { addSuffix: true })}
+            </div>
+            <Badge variant="outline" className="text-primary border-primary/50">
+              News
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+    </a>
+  );
+}
+
+
 export default function AlertsPage() {
-  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchIncidents() {
+    async function fetchAlerts() {
       try {
-        const fetchedIncidents = await getIncidents();
-        const sortedIncidents = [...fetchedIncidents].sort((a, b) => {
-          if (a.status === 'active' && b.status !== 'active') return -1;
-          if (a.status !== 'active' && b.status === 'active') return 1;
+        const [incidents, news] = await Promise.all([
+          getIncidents(),
+          getNewsArticles(),
+        ]);
+        
+        const allAlerts = [...incidents, ...news];
+
+        const sortedAlerts = allAlerts.sort((a, b) => {
+          // Logic to sort active incidents to the top
+          if (a.kind === 'incident' && a.status === 'active' && (b.kind !== 'incident' || b.status !== 'active')) return -1;
+          if (b.kind === 'incident' && b.status === 'active' && (a.kind !== 'incident' || a.status !== 'active')) return 1;
+          // Then sort by timestamp
           return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
         });
-        setIncidents(sortedIncidents);
+
+        setAlerts(sortedAlerts);
       } catch (error) {
         console.error("Failed to fetch alerts:", error);
       } finally {
         setIsLoading(false);
       }
     }
-    fetchIncidents();
+    fetchAlerts();
   }, []);
 
   return (
@@ -164,9 +208,13 @@ export default function AlertsPage() {
               <Skeleton key={i} className="h-40 w-full rounded-lg" />
             ))
           ) : (
-            incidents.map((incident) => (
-              <AlertCard key={incident.id} incident={incident} />
-            ))
+            alerts.map((item) =>
+              item.kind === 'incident' ? (
+                <AlertCard key={item.id} incident={item} />
+              ) : (
+                <NewsCard key={item.id} article={item} />
+              )
+            )
           )}
         </div>
       </main>

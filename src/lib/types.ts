@@ -15,4 +15,17 @@ export type Incident = {
   timestamp: string; // ISO 8601 string format
   imageUrl?: string;
   reason?: string;
+  kind: 'incident';
 };
+
+export type NewsArticle = {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  source: string;
+  timestamp: string; // ISO 8601 string format
+  kind: 'news';
+};
+
+export type AlertItem = Incident | NewsArticle;

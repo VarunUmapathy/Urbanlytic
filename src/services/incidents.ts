@@ -1,27 +1,14 @@
-
 // src/lib/firebaseService.ts
 
 import { db, storage } from '@/lib/firebase';
-import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, where } from 'firebase/firestore';
+import { collection, getDocs, Timestamp, GeoPoint, addDoc, query, orderBy, where, limit } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
+import type { Incident, IncidentType, NewsArticle } from '@/lib/types';
+
 
 // --- TYPE DEFINITIONS ---
-
-export type IncidentType = "traffic" | "safety" | "infrastructure" | "road_hazard" | "accident" | "pothole" | "public_disturbance";
-
-export interface Incident {
-  id: string;
-  type: IncidentType;
-  status: 'active' | 'resolved' | 'discarded';
-  severity: 'low' | 'medium' | 'high';
-  location: { lat: number; lng: number };
-  title: string;
-  description: string;
-  timestamp: string; // ISO string format
-  imageUrl?: string;
-  reason?: string;
-}
+export type { Incident, IncidentType, NewsArticle } from '@/lib/types';
 
 export interface UserReport {
   type: IncidentType;
@@ -132,12 +119,43 @@ export async function getIncidents(): Promise<Incident[]> {
           "No description provided.",
         timestamp,
         imageUrl,
+        kind: 'incident',
       } as Incident;
     })
   );
 
   return incidents;
 }
+
+export async function getNewsArticles(): Promise<NewsArticle[]> {
+  const newsCol = collection(db, "news");
+  const q = query(newsCol, orderBy("ingestedAt", "desc"), limit(10));
+  const newsSnapshot = await getDocs(q);
+
+  return newsSnapshot.docs.map(doc => {
+    const data = doc.data();
+    let timestamp;
+
+    if (data.publishedAt) {
+      timestamp = new Date(data.publishedAt).toISOString();
+    } else if (data.ingestedAt) {
+      timestamp = new Date(data.ingestedAt).toISOString();
+    } else {
+      timestamp = new Date().toISOString();
+    }
+
+    return {
+      id: doc.id,
+      title: data.title || "News Update",
+      description: data.description || "No description available.",
+      url: data.url,
+      source: data.source_name || "Unknown Source",
+      timestamp: timestamp,
+      kind: 'news'
+    } as NewsArticle;
+  });
+}
+
 
 export async function getUserReports(): Promise<Incident[]> {
   const auth = getAuth();
@@ -175,6 +193,7 @@ export async function getUserReports(): Promise<Incident[]> {
       description: data.description || 'No description provided.',
       timestamp: timestamp,
       reason: data.reason || undefined,
+      kind: 'incident',
     } as Incident;
   });
 
