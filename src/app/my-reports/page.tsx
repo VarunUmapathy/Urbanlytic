@@ -120,7 +120,11 @@ export default function MyReportsPage() {
 
   useEffect(() => {
     async function fetchMyReports() {
-      if (!user) return;
+      if (!user) {
+        setIsLoading(false);
+        return;
+      };
+      setIsLoading(true);
       try {
         const fetchedIncidents = await getUserReports();
         setMyReports(fetchedIncidents);

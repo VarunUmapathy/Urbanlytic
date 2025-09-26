@@ -169,7 +169,8 @@ export async function getUserReports(): Promise<Incident[]> {
   const reportsCol = collection(db, 'UserReports');
   // The composite index is not available, so we filter first and then sort in code.
   const q = query(reportsCol, where("userId", "==", user.uid));
-  console.log(user.uid,q)
+  console.log('Checking auth state in getUserReports...');
+  console.log('Current user:', auth.currentUser);
   const reportSnapshot = await getDocs(q);
   const reports = reportSnapshot.docs.map(doc => {
     const data = doc.data();
