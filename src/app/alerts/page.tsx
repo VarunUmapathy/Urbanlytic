@@ -136,13 +136,15 @@ function NewsCard({ article }: { article: NewsArticle }) {
   return (
     <a href={article.url} target="_blank" rel="noopener noreferrer">
       <Card className="overflow-hidden hover:bg-muted/50 transition-colors">
-        <CardHeader className="p-3 flex-row items-center gap-3 space-y-0 bg-primary/10 border-b border-primary/20">
-          <Newspaper className="w-6 h-6 text-primary" />
-          <div>
-            <p className="text-xs text-primary">{article.source}</p>
-            <CardTitle className="text-base font-bold font-headline leading-tight">
-              {article.title}
-            </CardTitle>
+        <CardHeader className="p-3 space-y-0 bg-primary/10 border-b border-primary/20">
+          <div className="flex items-center gap-3">
+            <Newspaper className="w-6 h-6 text-primary flex-shrink-0" />
+            <div>
+              <p className="text-xs text-primary">{article.source}</p>
+              <CardTitle className="text-base font-bold font-headline leading-tight">
+                {article.title}
+              </CardTitle>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-3 text-sm">
