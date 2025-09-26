@@ -129,17 +129,16 @@ export async function getIncidents(): Promise<Incident[]> {
 
 export async function getNewsArticles(): Promise<NewsArticle[]> {
   const newsCol = collection(db, "news");
-  const q = query(newsCol, orderBy("ingestedAt", "desc"), limit(10));
-  const newsSnapshot = await getDocs(q);
+  const newsSnapshot = await getDocs(newsCol);
 
-  return newsSnapshot.docs.map(doc => {
+  const articles = newsSnapshot.docs.map(doc => {
     const data = doc.data();
     let timestamp;
 
     if (data.publishedAt) {
       timestamp = new Date(data.publishedAt).toISOString();
-    } else if (data.ingestedAt) {
-      timestamp = new Date(data.ingestedAt).toISOString();
+    } else if (data.ingestedAt instanceof Timestamp) {
+      timestamp = data.ingestedAt.toDate().toISOString();
     } else {
       timestamp = new Date().toISOString();
     }
@@ -154,6 +153,9 @@ export async function getNewsArticles(): Promise<NewsArticle[]> {
       kind: 'news'
     } as NewsArticle;
   });
+
+  // Sort articles by timestamp on the client side
+  return articles.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 
 
