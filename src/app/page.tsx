@@ -15,14 +15,18 @@ import { Button } from "@/components/ui/button";
 import { Plus, Search, Loader2 } from "lucide-react";
 import { ReportIncidentDialog } from "@/components/report-incident-dialog";
 import { Input } from "@/components/ui/input";
-import { AnalyticsService } from "@/services/analytics"; // Import the class
+import { AnalyticsService } from "@/services/analytics";
+import { ConsoleAnalyticsProvider } from "@/services/analytics/console-provider";
 
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
   
-  // Use useMemo to ensure the service is only instantiated once
-  const analyticsService = useMemo(() => AnalyticsService.getInstance(), []);
+  // Use useMemo to ensure the service is only instantiated once with its providers
+  const analyticsService = useMemo(() => {
+    const consoleProvider = new ConsoleAnalyticsProvider();
+    return AnalyticsService.getInstance([consoleProvider]);
+  }, []);
 
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
@@ -42,7 +46,6 @@ export default function Home() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    // Using the AnalyticsService class to track a page view
     analyticsService.trackPageView("Home");
 
     async function fetchIncidents() {
@@ -58,7 +61,7 @@ export default function Home() {
       }
     }
     fetchIncidents();
-  }, [user, analyticsService]); // Added analyticsService to dependency array
+  }, [user, analyticsService]);
 
   const filteredIncidents = incidents.filter(incident => {
     const typeMatch = filters.type.length === 0 || filters.type.includes(incident.type);
@@ -96,7 +99,6 @@ export default function Home() {
   };
 
   const handleReportButtonClick = () => {
-    // Using the AnalyticsService class to track a button click event
     analyticsService.trackEvent("report_incident_click", { from: "map_page" });
     setIsReportDialogOpen(true);
   }
