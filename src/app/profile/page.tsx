@@ -23,6 +23,7 @@ import {
   User as UserIcon,
   Loader2,
   KeyRound,
+  BarChart2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -38,6 +39,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Header } from "@/components/header";
+import Link from "next/link";
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
@@ -238,6 +240,21 @@ export default function ProfilePage() {
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
                 )}
               </button>
+            </div>
+          </div>
+
+          <div className="bg-card rounded-lg border">
+            <h3 className="text-sm font-semibold text-muted-foreground px-4 pt-4">
+              Developer
+            </h3>
+            <div className="p-2">
+              <Link href="/analytics" className="flex items-center justify-between w-full p-2 text-left rounded-md hover:bg-muted">
+                <div className="flex items-center gap-3">
+                  <BarChart2 className="w-5 h-5 text-primary" />
+                  <span>View Analytics</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </Link>
             </div>
           </div>
 

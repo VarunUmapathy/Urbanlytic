@@ -17,6 +17,7 @@ import { ReportIncidentDialog } from "@/components/report-incident-dialog";
 import { Input } from "@/components/ui/input";
 import { AnalyticsService } from "@/services/analytics";
 import { ConsoleAnalyticsProvider } from "@/services/analytics/console-provider";
+import { LogStoreAnalyticsProvider } from "@/services/analytics/log-store-provider";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -25,7 +26,8 @@ export default function Home() {
   // Use useMemo to ensure the service is only instantiated once with its providers
   const analyticsService = useMemo(() => {
     const consoleProvider = new ConsoleAnalyticsProvider();
-    return AnalyticsService.getInstance([consoleProvider]);
+    const logStoreProvider = new LogStoreAnalyticsProvider();
+    return AnalyticsService.getInstance([consoleProvider, logStoreProvider]);
   }, []);
 
   const [incidents, setIncidents] = useState<Incident[]>([]);
