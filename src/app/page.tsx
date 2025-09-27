@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/firebase/provider";
 import { useRouter } from "next/navigation";
 import { PhoneLayout } from "@/components/phone-layout";
@@ -15,10 +15,14 @@ import { Button } from "@/components/ui/button";
 import { Plus, Search, Loader2 } from "lucide-react";
 import { ReportIncidentDialog } from "@/components/report-incident-dialog";
 import { Input } from "@/components/ui/input";
+import { AnalyticsService } from "@/services/analytics"; // Import the class
 
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  
+  // Use useMemo to ensure the service is only instantiated once
+  const analyticsService = useMemo(() => AnalyticsService.getInstance(), []);
 
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
@@ -38,6 +42,9 @@ export default function Home() {
   }, [user, loading, router]);
 
   useEffect(() => {
+    // Using the AnalyticsService class to track a page view
+    analyticsService.trackPageView("Home");
+
     async function fetchIncidents() {
       if (user) {
         try {
@@ -51,7 +58,7 @@ export default function Home() {
       }
     }
     fetchIncidents();
-  }, [user]);
+  }, [user, analyticsService]); // Added analyticsService to dependency array
 
   const filteredIncidents = incidents.filter(incident => {
     const typeMatch = filters.type.length === 0 || filters.type.includes(incident.type);
@@ -87,6 +94,12 @@ export default function Home() {
   const handleFilterReset = () => {
     setFilters({ type: [], status: [] });
   };
+
+  const handleReportButtonClick = () => {
+    // Using the AnalyticsService class to track a button click event
+    analyticsService.trackEvent("report_incident_click", { from: "map_page" });
+    setIsReportDialogOpen(true);
+  }
   
   if (loading || !user) {
     return (
@@ -143,7 +156,7 @@ export default function Home() {
 
       <Button
         className="absolute bottom-[calc(4rem+1rem)] right-4 z-10 rounded-full h-14 w-14 shadow-lg"
-        onClick={() => setIsReportDialogOpen(true)}
+        onClick={handleReportButtonClick}
       >
         <Plus className="h-6 w-6" />
         <span className="sr-only">Report Incident</span>
